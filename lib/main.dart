@@ -8,6 +8,7 @@ import 'app/app.dart';
 import 'core/logger/logger.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/voice_service.dart';
+import 'core/services/sofia_ai_service.dart';
 import 'features/dashboard/logic/glucose_analyzer.dart';
 
 Future<void> main() async {
@@ -29,6 +30,9 @@ Future<void> main() async {
   NotificationService.instance.onNotificationTapped = (payload) {
     GlucoseAnalyzer.instance.handleNotificationPayload(payload);
   };
+
+  // Sofia AI ayarlarını yükle
+  await SofiaAiService.instance.loadSettings();
 
   // Flutter hata yakalayıcıları
   FlutterError.onError = (details) {

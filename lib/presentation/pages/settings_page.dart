@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/routes.dart';
 import '../../core/constants.dart';
 import '../../core/services/voice_service.dart';
+import '../../core/services/sofia_ai_service.dart';
 import '../widgets/glass_widgets.dart';
 
 /// Konsolide Ayarlar sayfası — Tab 4.
@@ -138,6 +139,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           label: Tr.sofiaAi,
           color: Colors.purple,
           onTap: () => Navigator.pushNamed(context, AppRoutes.sofiaAi),
+        ),
+        GlassListTile(
+          icon: Icons.vpn_key,
+          label: 'API Anahtarı',
+          color: Colors.orange,
+          onTap: () => _showApiKeyDialog(context, isDark),
+        ),
+        GlassListTile(
+          icon: Icons.psychology,
+          label: 'AI Model Seç',
+          color: Colors.deepPurple,
+          onTap: () => _showModelSelector(context, isDark),
         ),
 
         const SizedBox(height: 8),
@@ -308,6 +321,162 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 color: isDark ? Colors.white70 : Colors.black87,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Sofia AI API anahtarı değiştirme dialogu.
+  void _showApiKeyDialog(BuildContext context, bool isDark) {
+    final controller = TextEditingController();
+    final currentKey = SofiaAiService.instance.maskedApiKey;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? RC.bgDark2 : Colors.white,
+        title: Text(
+          'OpenRouter API Anahtarı',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : RC.black,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Mevcut: $currentKey',
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white54 : Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: 'Yeni API Anahtarı',
+                hintText: 'sk-or-v1-...',
+                prefixIcon: const Icon(Icons.vpn_key),
+                border: const OutlineInputBorder(),
+                helperText: 'openrouter.ai adresinden alabilirsiniz',
+                helperStyle: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.white38 : Colors.grey,
+                ),
+              ),
+              obscureText: true,
+              maxLines: 1,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Boş bırakırsanız varsayılan anahtar kullanılır.',
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white38 : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(Tr.iptal),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final key = controller.text.trim();
+              if (key.isEmpty) {
+                await SofiaAiService.instance.setApiKey(
+                  SofiaAiService.defaultApiKey,
+                );
+              } else {
+                await SofiaAiService.instance.setApiKey(key);
+              }
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('API anahtarı güncellendi.')),
+                );
+              }
+            },
+            child: Text(Tr.kaydet),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Sofia AI model seçme dialogu.
+  void _showModelSelector(BuildContext context, bool isDark) {
+    final currentModel = SofiaAiService.instance.currentModel;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? RC.bgDark2 : Colors.white,
+        title: Text(
+          'Yapay Zeka Modeli',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : RC.black,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: SofiaAiService.availableModels.length,
+            itemBuilder: (context, index) {
+              final model = SofiaAiService.availableModels[index];
+              final isSelected = model.id == currentModel;
+              return RadioListTile<String>(
+                value: model.id,
+                groupValue: currentModel,
+                onChanged: (val) async {
+                  if (val != null) {
+                    await SofiaAiService.instance.setModel(val);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Model değiştirildi: ${model.name}'),
+                        ),
+                      );
+                      setState(() {}); // Refresh UI
+                    }
+                  }
+                },
+                title: Text(
+                  model.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isDark ? Colors.white : RC.black,
+                  ),
+                ),
+                subtitle: Text(
+                  model.id,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white38 : Colors.grey,
+                  ),
+                ),
+                activeColor: Colors.purple,
+                dense: true,
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(Tr.iptal),
           ),
         ],
       ),

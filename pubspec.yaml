@@ -27,6 +27,7 @@ dependencies:
   permission_handler: ^11.3.1
   google_fonts: ^8.0.1
   http: ^1.6.0
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_test:
@@ -37,6 +38,7 @@ dev_dependencies:
   drift_dev: ^2.22.1
   build_runner: ^2.4.15
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -44,6 +46,14 @@ flutter:
     - assets/images/logo.png
     - assets/fonts/NotoSans-Regular.ttf
     - assets/fonts/NotoSans-Bold.ttf
+
+# ─── App Icon ─────────────────────────────────────────────
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "appicon/LOGO.png"
+  adaptive_icon_background: "#050D1A"
+  adaptive_icon_foreground: "appicon/LOGO.png"
   #         style: italic
   #   - family: Trajan Pro
   #     fonts:

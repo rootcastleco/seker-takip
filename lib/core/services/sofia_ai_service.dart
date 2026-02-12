@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../logger/logger.dart';
 
 /// Sofia AI — OpenRouter API ile yapay zeka asistanı.
@@ -10,13 +11,85 @@ class SofiaAiService {
   SofiaAiService._();
   static final SofiaAiService instance = SofiaAiService._();
 
-  // ─── OpenRouter Ayarları ────────────────────────────────
-  static const String _apiKey =
+  // ─── SharedPreferences Anahtarları ──────────────────────
+  static const String _prefApiKey = 'sofia_api_key';
+  static const String _prefModel = 'sofia_model';
+
+  // ─── Varsayılan Değerler ────────────────────────────────
+  static const String defaultApiKey =
       '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';
   static const String _baseUrl =
       'https://openrouter.ai/api/v1/chat/completions';
-  static const String _model =
+  static const String defaultModel =
       'google/gemini-2.0-flash-lite-preview-02-05:free';
+
+  /// Kullanılabilir ücretsiz modeller.
+  static const List<SofiaModel> availableModels = [
+    SofiaModel(
+      id: 'google/gemini-2.0-flash-lite-preview-02-05:free',
+      name: 'Gemini 2.0 Flash Lite (Ücretsiz)',
+    ),
+    SofiaModel(
+      id: 'google/gemma-3-4b-it:free',
+      name: 'Google Gemma 3 4B (Ücretsiz)',
+    ),
+    SofiaModel(
+      id: 'meta-llama/llama-4-scout:free',
+      name: 'Llama 4 Scout (Ücretsiz)',
+    ),
+    SofiaModel(id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Ücretsiz)'),
+    SofiaModel(id: 'qwen/qwen3-8b:free', name: 'Qwen 3 8B (Ücretsiz)'),
+    SofiaModel(id: 'microsoft/phi-4:free', name: 'Microsoft Phi 4 (Ücretsiz)'),
+  ];
+
+  // ─── Çalışma Zamanı Ayarları ────────────────────────────
+  String _apiKey = defaultApiKey;
+  String _model = defaultModel;
+
+  /// Kaydedilmiş ayarları yükle.
+  Future<void> loadSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _apiKey = prefs.getString(_prefApiKey) ?? defaultApiKey;
+      _model = prefs.getString(_prefModel) ?? defaultModel;
+      AppLogger.instance.info('Sofia AI ayarları yüklendi. Model: $_model');
+    } catch (e) {
+      AppLogger.instance.error('Sofia AI ayar yükleme hatası: $e');
+    }
+  }
+
+  /// API anahtarını kaydet.
+  Future<void> setApiKey(String key) async {
+    _apiKey = key.trim().isNotEmpty ? key.trim() : defaultApiKey;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefApiKey, _apiKey);
+    AppLogger.instance.info('Sofia AI API anahtarı güncellendi.');
+  }
+
+  /// Model seç ve kaydet.
+  Future<void> setModel(String modelId) async {
+    _model = modelId;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefModel, _model);
+    AppLogger.instance.info('Sofia AI model güncellendi: $_model');
+  }
+
+  /// Mevcut API anahtarını getir (maskelenmiş).
+  String get maskedApiKey {
+    if (_apiKey.length <= 12) return '****';
+    return '${_apiKey.substring(0, 8)}...${_apiKey.substring(_apiKey.length - 4)}';
+  }
+
+  /// Mevcut model ID'si.
+  String get currentModel => _model;
+
+  /// Mevcut model adı.
+  String get currentModelName {
+    for (final m in availableModels) {
+      if (m.id == _model) return m.name;
+    }
+    return _model;
+  }
 
   // ─── Sabit Sistem İstemi ────────────────────────────────
   static const String _systemPrompt = '''
@@ -82,19 +155,35 @@ Eğer sana JSON verisi veya veritabanı çıktısı verilirse, bunu insan diline
         if (content.isNotEmpty) {
           _history.add({'role': 'assistant', 'content': content});
           AppLogger.instance.info(
-            'Sofia AI yanıt verdi (${content.length} karakter)',
+            'Sofia AI yanıt verdi (${content.length} karakter) [model: $_model]',
           );
           return content;
         }
         return 'Sofia şu an yanıt veremedi. Lütfen tekrar dene.';
+      } else if (response.statusCode == 401) {
+        AppLogger.instance.error('Sofia AI: API anahtarı geçersiz (401)');
+        return 'API anahtarı geçersiz. Ayarlar sayfasından API anahtarını kontrol et.';
+      } else if (response.statusCode == 429) {
+        AppLogger.instance.error('Sofia AI: Rate limit (429)');
+        return 'Çok fazla istek gönderildi. Biraz bekle ve tekrar dene.';
+      } else if (response.statusCode == 404 || response.statusCode == 400) {
+        AppLogger.instance.error(
+          'Sofia AI: Model bulunamadı veya hata ($_model) — ${response.statusCode}: ${response.body}',
+        );
+        return 'Seçilen model şu an kullanılamıyor. Ayarlardan farklı bir model seçmeyi dene. '
+            '(Hata: ${response.statusCode})';
       } else {
         AppLogger.instance.error(
           'Sofia AI API hatası: ${response.statusCode} — ${response.body}',
         );
-        return 'Bağlantı hatası oluştu. İnternet bağlantını kontrol et ve tekrar dene.';
+        return 'Bağlantı hatası oluştu (Kod: ${response.statusCode}). '
+            'İnternet bağlantını kontrol et ve tekrar dene.';
       }
     } catch (e, stack) {
       AppLogger.instance.error('Sofia AI istisna', error: e, stack: stack);
+      if (e.toString().contains('TimeoutException')) {
+        return 'Sofia yanıt vermedi, bağlantı zaman aşımına uğradı. İnternetini kontrol et.';
+      }
       return 'Sofia şu an ulaşılamıyor. İnternet bağlantını kontrol et.';
     }
   }
@@ -171,4 +260,12 @@ Eğer sana JSON verisi veya veritabanı çıktısı verilirse, bunu insan diline
       'Diyabet hastasına uygun beslenme tavsiyesi ver.',
     );
   }
+}
+
+/// Sofia AI model tanımlayıcısı.
+class SofiaModel {
+  final String id;
+  final String name;
+
+  const SofiaModel({required this.id, required this.name});
 }
