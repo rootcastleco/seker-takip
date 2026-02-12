@@ -1,0 +1,49 @@
+name: seker_takip
+description: Rootcastle Kan Şekeri Takip - Offline-first kan şekeri takip uygulaması.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.30
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  flutter_riverpod: ^2.6.1
+  share_plus: ^10.1.4
+  excel: ^4.0.6
+  crypto: ^3.0.6
+  intl: ^0.20.2
+  file_picker: ^8.3.7
+  flutter_local_notifications: ^18.0.1
+  pdf: ^3.11.2
+  flutter_tts: ^4.2.0
+  camera: ^0.11.1
+  google_mlkit_text_recognition: ^0.14.0
+  permission_handler: ^11.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.22.1
+  build_runner: ^2.4.15
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
