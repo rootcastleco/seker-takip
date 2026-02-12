@@ -40,8 +40,31 @@ class _RecordsTablePageState extends ConsumerState<RecordsTablePage> {
         59,
         59,
       );
+      filtered = filtered.where((r) {
+        // tarih UTC olarak saklanıyor, local'e çevirip karşılaştır
+        final local = r.tarih.toLocal();
+        return !local.isBefore(start) && !local.isAfter(end);
+      }).toList();
+    } else if (_startDate != null) {
+      final start = DateTime(
+        _startDate!.year,
+        _startDate!.month,
+        _startDate!.day,
+      );
       filtered = filtered
-          .where((r) => !r.tarih.isBefore(start) && !r.tarih.isAfter(end))
+          .where((r) => !r.tarih.toLocal().isBefore(start))
+          .toList();
+    } else if (_endDate != null) {
+      final end = DateTime(
+        _endDate!.year,
+        _endDate!.month,
+        _endDate!.day,
+        23,
+        59,
+        59,
+      );
+      filtered = filtered
+          .where((r) => !r.tarih.toLocal().isAfter(end))
           .toList();
     }
 

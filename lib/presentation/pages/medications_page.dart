@@ -67,8 +67,43 @@ class _MedicationsPageState extends ConsumerState<MedicationsPage> {
             if (meds.isEmpty) {
               return _buildEmptyState(isDark);
             }
+            // Saate göre sırala (aktifler önce, sonra saate göre)
+            final sorted = List<MedicationEntity>.from(meds);
+            sorted.sort((a, b) {
+              // Aktifler önce
+              if (a.aktif != b.aktif) return a.aktif ? -1 : 1;
+              // Saate göre sırala
+              final aTime = a.saatHour * 60 + a.saatMinute;
+              final bTime = b.saatHour * 60 + b.saatMinute;
+              return aTime.compareTo(bTime);
+            });
             return Column(
-              children: meds.map((med) => _buildMedCard(med, isDark)).toList(),
+              children: [
+                // Aktif ilaç sayısı
+                GlassCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _miniStat(
+                        '${sorted.where((m) => m.aktif).length}',
+                        'Aktif İlaç',
+                        RC.accentGreen,
+                        isDark,
+                      ),
+                      _miniStat('${sorted.length}', 'Toplam', RC.blue, isDark),
+                      _miniStat(
+                        _nextMedTime(sorted),
+                        'Sıradaki',
+                        RC.accent,
+                        isDark,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...sorted.map((med) => _buildMedCard(med, isDark)),
+              ],
             );
           },
         ),
@@ -94,6 +129,14 @@ class _MedicationsPageState extends ConsumerState<MedicationsPage> {
               color: isDark ? Colors.white54 : Colors.black54,
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'İlaçlarını ekle, saatinde hatırlatalım.',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.white38 : Colors.black38,
+            ),
+          ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () => _showMedicationDialog(context),
@@ -103,6 +146,44 @@ class _MedicationsPageState extends ConsumerState<MedicationsPage> {
         ],
       ),
     );
+  }
+
+  Widget _miniStat(String value, String label, Color color, bool isDark) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? Colors.white54 : Colors.black45,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _nextMedTime(List<MedicationEntity> meds) {
+    final now = TimeOfDay.now();
+    final nowMinutes = now.hour * 60 + now.minute;
+    for (final m in meds) {
+      if (!m.aktif || m.hatirlatmaSaati.isEmpty) continue;
+      final mMinutes = m.saatHour * 60 + m.saatMinute;
+      if (mMinutes > nowMinutes) return m.hatirlatmaSaati;
+    }
+    // Yarına döner
+    for (final m in meds) {
+      if (!m.aktif || m.hatirlatmaSaati.isEmpty) continue;
+      return m.hatirlatmaSaati;
+    }
+    return '-';
   }
 
   Widget _buildMedCard(MedicationEntity med, bool isDark) {

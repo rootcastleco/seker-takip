@@ -5,7 +5,7 @@ import '../logger/logger.dart';
 /// REI Sistem Sesi — TTS servisi.
 ///
 /// Samsung cihaz uyumluluğu için awaitSpeakCompletion + engine seçimi.
-/// Pitch: 0.8  |  Rate: 0.5  |  Language: tr-TR
+/// İnsansı ses ayarları: Pitch: 1.0  |  Rate: 0.45  |  Language: tr-TR
 class SystemVoiceService {
   SystemVoiceService._();
   static final SystemVoiceService instance = SystemVoiceService._();
@@ -14,9 +14,9 @@ class SystemVoiceService {
   bool _initialized = false;
   bool _enabled = true;
 
-  // ─── TTS parametreleri ─────────────────────────────────
-  static const double _pitch = 0.8;
-  static const double _rate = 0.5;
+  // ─── TTS parametreleri (daha insansı ses) ──────────────
+  static const double _pitch = 1.0; // Doğal perde
+  static const double _rate = 0.45; // Doğal hız
   static const String _language = 'tr-TR';
 
   /// Sesli asistanı aç/kapa.
@@ -70,7 +70,7 @@ class SystemVoiceService {
     }
   }
 
-  /// Mesajı seslendir. awaitSpeakCompletion sayesinde sıralı çalışır.
+  /// Mesajı seslendir. Doğal konuşma için cümleleri ayırır.
   Future<void> speak(String message) async {
     if (!_initialized || !_enabled) {
       AppLogger.instance.warn('TTS devre dışı veya başlatılmadı.');
@@ -79,7 +79,27 @@ class SystemVoiceService {
 
     try {
       AppLogger.instance.info('TTS Speak: "$message"');
-      await _tts.speak(message);
+      // Cümleleri ayır ve kısa aralıklarla oku (daha insansı)
+      final sentences = message
+          .replaceAll('...', '.')
+          .split(RegExp(r'[.!?]\s+'))
+          .where((s) => s.trim().isNotEmpty)
+          .toList();
+
+      if (sentences.length <= 2) {
+        // Kısa mesajlar tek seferde
+        await _tts.speak(message);
+      } else {
+        // Uzun mesajlar cümle cümle (araya kısa duraklama)
+        for (int i = 0; i < sentences.length; i++) {
+          final sentence = sentences[i].trim();
+          if (sentence.isEmpty) continue;
+          await _tts.speak('$sentence.');
+          if (i < sentences.length - 1) {
+            await Future.delayed(const Duration(milliseconds: 200));
+          }
+        }
+      }
     } catch (e, stack) {
       AppLogger.instance.error('TTS speak hatası', error: e, stack: stack);
     }

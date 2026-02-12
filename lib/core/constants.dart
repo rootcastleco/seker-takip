@@ -2,7 +2,7 @@
 
 // ─── Uygulama ────────────────────────────────────────────
 const String kAppName = 'REI Şeker Takip';
-const String kAppVersion = '2.0.0';
+const String kAppVersion = '3.0.0';
 
 // ─── Ölçüm limitleri (mg/dL) ────────────────────────────
 const int kGlucoseMin = 20;
@@ -191,6 +191,7 @@ class Tr {
   // Bottom Navigation
   static const String tabAnaSayfa = 'Ana Sayfa';
   static const String tabKayitDefteri = 'Kayıt Defteri';
+  static const String tabIlaclarim = 'İlaçlarım';
   static const String tabAnaliz = 'Analiz';
   static const String tabSofia = 'Sofia';
   static const String tabAyarlar = 'Ayarlar';

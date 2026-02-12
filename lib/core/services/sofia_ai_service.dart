@@ -1,108 +1,71 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../logger/logger.dart';
 
-/// Sofia AI — OpenRouter API ile yapay zeka asistanı.
+/// Sofia AI — Google Gemini API ile yapay zeka asistanı.
 ///
-/// Kan şekeri, diyabet yönetimi, beslenme, ilaç bilgisi konularında
-/// sesli ve yazılı tavsiyeler verir. Doktor değildir, tavsiye verir.
+/// Kan şekeri, diyabet yönetimi, beslenme, ilaç bilgisi, yemek analizi,
+/// acil durum desteği ve biohacking koçluğu.
 class SofiaAiService {
   SofiaAiService._();
   static final SofiaAiService instance = SofiaAiService._();
 
-  // ─── SharedPreferences Anahtarları ──────────────────────
   static const String _prefApiKey = 'sofia_api_key';
   static const String _prefModel = 'sofia_model';
 
-  // ─── Varsayılan Değerler ────────────────────────────────
-  static const String defaultApiKey =
-      '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';
+  static const String defaultApiKey = 'AIzaSyAf-u-aqdJcqwcz0jiITMpN15FC8gEsaYs';
   static const String _baseUrl =
-      'https://openrouter.ai/api/v1/chat/completions';
-  static const String defaultModel = 'google/gemma-3-4b-it:free';
+      'https://generativelanguage.googleapis.com/v1beta/models';
+  static const String defaultModel = 'gemini-2.0-flash';
 
-  /// Kullanılabilir ücretsiz modeller (Şubat 2026 doğrulanmış).
+  /// Kullanılabilir Gemini modelleri.
   static const List<SofiaModel> availableModels = [
-    SofiaModel(
-      id: 'google/gemma-3-4b-it:free',
-      name: 'Google Gemma 3 4B (Ücretsiz)',
-    ),
-    SofiaModel(
-      id: 'google/gemma-3-27b-it:free',
-      name: 'Google Gemma 3 27B (Ücretsiz)',
-    ),
-    SofiaModel(
-      id: 'stepfun/step-3.5-flash:free',
-      name: 'StepFun Step 3.5 Flash (Ücretsiz)',
-    ),
-    SofiaModel(
-      id: 'nvidia/nemotron-3-nano-30b-a3b:free',
-      name: 'NVIDIA Nemotron 3 Nano 30B (Ücretsiz)',
-    ),
-    SofiaModel(
-      id: 'arcee-ai/trinity-mini:free',
-      name: 'Arcee Trinity Mini (Ücretsiz)',
-    ),
-    SofiaModel(
-      id: 'arcee-ai/trinity-large-preview:free',
-      name: 'Arcee Trinity Large (Ücretsiz)',
-    ),
+    SofiaModel(id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash'),
+    SofiaModel(id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite'),
+    SofiaModel(id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash'),
+    SofiaModel(id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro'),
   ];
 
-  // ─── Çalışma Zamanı Ayarları ────────────────────────────
   String _apiKey = defaultApiKey;
   String _model = defaultModel;
 
-  /// Kaydedilmiş ayarları yükle.
   Future<void> loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       _apiKey = prefs.getString(_prefApiKey) ?? defaultApiKey;
       _model = prefs.getString(_prefModel) ?? defaultModel;
-
-      // Kayıtlı model artık listede yoksa varsayılana dön
       final modelExists = availableModels.any((m) => m.id == _model);
       if (!modelExists) {
-        AppLogger.instance.info(
-          'Kayıtlı model ($_model) artık mevcut değil, varsayılana dönülüyor.',
-        );
         _model = defaultModel;
         await prefs.setString(_prefModel, _model);
       }
-
-      AppLogger.instance.info('Sofia AI ayarları yüklendi. Model: $_model');
+      AppLogger.instance.info('Sofia AI: Model=$_model');
     } catch (e) {
-      AppLogger.instance.error('Sofia AI ayar yükleme hatası: $e');
+      AppLogger.instance.error('Sofia ayar hatasi: $e');
     }
   }
 
-  /// API anahtarını kaydet.
   Future<void> setApiKey(String key) async {
     _apiKey = key.trim().isNotEmpty ? key.trim() : defaultApiKey;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefApiKey, _apiKey);
-    AppLogger.instance.info('Sofia AI API anahtarı güncellendi.');
   }
 
-  /// Model seç ve kaydet.
   Future<void> setModel(String modelId) async {
     _model = modelId;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefModel, _model);
-    AppLogger.instance.info('Sofia AI model güncellendi: $_model');
   }
 
-  /// Mevcut API anahtarını getir (maskelenmiş).
   String get maskedApiKey {
     if (_apiKey.length <= 12) return '****';
     return '${_apiKey.substring(0, 8)}...${_apiKey.substring(_apiKey.length - 4)}';
   }
 
-  /// Mevcut model ID'si.
   String get currentModel => _model;
 
-  /// Mevcut model adı.
   String get currentModelName {
     for (final m in availableModels) {
       if (m.id == _model) return m.name;
@@ -110,113 +73,303 @@ class SofiaAiService {
     return _model;
   }
 
-  // ─── Sabit Sistem İstemi ────────────────────────────────
+  // ─── Sistem İstemleri ───────────────────────────────────
+
   static const String _systemPrompt = '''
-Senin adın Sofia AI. Sen kullanıcıların kan şekeri dengesi, diyabet yönetimi ve sağlıklı beslenme konularında destekçisisin.
+Senin adin Sofia. Sen bir yapay zeka saglik asistanisin. Diyabet yonetimi, kan sekeri takibi, beslenme ve ilac konularinda yardim ediyorsun.
 
-TEMEL PRENSİPLERİN:
-1. SESLİ OKUMA FORMATI: Yanıtların bir Text-to-Speech motoru tarafından okunacak. Bu yüzden asla madde işareti, yıldız, kalın yazı, tablo, URL veya emoji kullanma. Noktalama işaretlerini, virgül ve noktayı duraklama yapılması gereken yerlerde doğru kullan.
-2. ÜSLUP: Samimi, güven veren, net ve kısa cümleler kuran bir Türk asistanı gibi konuş. Robotik olma. Sade ve anlaşılır Türkçe kullan.
-3. KİMLİK: Sen sadece bir yazılı ve sesli asistansın. Doktor veya diyetisyen değilsin.
-4. KONU SINIRI: Sadece şeker, karbonhidrat, insülin direnci, beslenme, ilaç hatırlatmaları ve diyabet yönetimi hakkında konuş. Kullanıcı alakasız bir konu açarsa, nazikçe konuyu tekrar sağlığa getir.
-5. YASAL ZORUNLULUK: Tıbbi bir tanı koyma. Her sağlık veya ilaç tavsiyesinin sonuna mutlaka "Bu bir tavsiyedir, lütfen doktoruna danışmayı unutma." veya "Kesin tanı için doktorunla görüşmelisin." gibi bir uyarı ekle.
-6. İLAÇ HATIRLATMA: Kullanıcı ilaç saati veya dozajı sorarsa, asla dozaj değişikliği önerme. Doktorunun reçetesine uymasını söyle.
-7. UZUNLUK: Yanıtlarını 3 ila 6 cümle arasında tut. Çok uzun konuşma.
+KURALLAR:
+1. Samimi, sicak, guven veren bir arkadas gibi konus. Kisa ve net cumleler kur. Dogal Turkce kullan.
+2. Yanitlarin sesli okunacak. Asla madde isareti, yildiz, kalin yazi, tablo, URL veya emoji kullanma.
+3. 3-6 cumle arasinda tut.
+4. Doktor veya diyetisyen degilsin. Her tavsiyenin sonuna "Bu bir tavsiyedir, doktoruna danismayi unutma." ekle.
+5. Asla dozaj degisikligi onerme. Doktor recetesine uymasini soyle.
+6. Sadece saglik konularinda konus. Alakasiz konu acilirsa nazikce geri getir.
+''';
 
-Eğer sana JSON verisi veya veritabanı çıktısı verilirse, bunu insan diline çevirerek, sohbet havasında kullanıcıya sun.
+  static const String _foodAnalysisPrompt = '''
+Sen Sofia. Yemek fotograflarini analiz edip diyabet hastasi icin besin degerlerini tahmin ediyorsun.
+1. Karbonhidrat miktarini ve yaklasik kalorisini tahmin et.
+2. Diyabet icin riskli durum varsa uyar.
+3. Asla liste veya tablo yapma. Akici tek paragraf kur.
+4. "tahminen", "yaklasik" kelimelerini kullan.
+5. Sonuna "Insulin dozunu buna gore ayarlamayi unutma. Doktoruna danis." ekle.
+''';
+
+  static const String _biohackingPrompt = '''
+Sen Sofia, bir Biohacking Kocusun. Saglik performansini analiz ediyorsun.
+1. Verilere bak: ilac uyumu, olcum sikligi, performans.
+2. Basari yuksekse "Biohacker", "Irade Makinesi", "Saglik Savascisi" gibi terimlerle ov.
+3. Basari dusukse yargilamadan motive edici konus.
+4. Emoji kullanma. Kisa ve vurucu konus.
+5. Motive edici bir cumleyle bitir.
+''';
+
+  static const String _emergencyPrompt = '''
+Sen Sofia. ACIL DURUM MODASIN.
+Hipoglisemi veya fenalık geciren kullaniciyi uyanik tutmak ve sakinlestirmek.
+1. Cok kisa, net ve emir kipiyle konus.
+2. Soru sorarak bilincini acik tutmaya calis.
+3. Panik yapma, guven verici ve otoriter ol.
+4. Sekerli bir seyler almasini soyle.
+5. Yardim yolda oldugunu belirt.
+''';
+
+  static const String _doctorReportPrompt = '''
+Sen Sofia. Ham saglik verilerini doktorlarin okuyacagi profesyonel, tibbi bir ozet raporuna donusturuyorsun.
+1. Dil: Resmi, tibbi ve objektif Turkce.
+2. "Ben" veya "Sen" kullanma. "Hasta" de.
+3. Istatistikleri yorumla.
+4. PDF'e yazilacak, paragraf yapisi kur.
+5. Profesyonel kapanisla bitir.
+''';
+
+  static const String _drugInteractionPrompt = '''
+Sen Sofia. Farmakolojik etkilesim kontrolu yapiyorsun.
+1. Mevcut ilaclar ile yeni maddeyi karsilastir.
+2. Ciddi etkilesim varsa net uyar.
+3. Etkilesim yoksa "Bilinen bir etkilesim yok ama doktoruna danis." de.
+4. Kisa ve anlasilir ol.
+5. Asla ilac onerme veya degistirme.
 ''';
 
   // ─── Konuşma Geçmişi ───────────────────────────────────
-  final List<Map<String, String>> _history = [];
+  final List<Map<String, dynamic>> _history = [];
   static const int _maxHistory = 20;
 
-  /// Konuşma geçmişini temizle.
   void clearHistory() => _history.clear();
 
-  /// Sofia'ya mesaj gönder.
-  Future<String> ask(String userMessage) async {
-    _history.add({'role': 'user', 'content': userMessage});
+  // ─── Gemini API ─────────────────────────────────────────
 
-    // Geçmişi sınırla
-    if (_history.length > _maxHistory) {
-      _history.removeRange(0, _history.length - _maxHistory);
-    }
+  Future<String> _callGemini({
+    required String systemPrompt,
+    required List<Map<String, dynamic>> contents,
+    int maxTokens = 400,
+    double temperature = 0.7,
+    String? model,
+  }) async {
+    final useModel = model ?? _model;
+    final url = '$_baseUrl/$useModel:generateContent?key=$_apiKey';
 
     try {
-      final messages = [
-        {'role': 'system', 'content': _systemPrompt},
-        ..._history,
-      ];
+      final body = <String, dynamic>{
+        'contents': contents,
+        'systemInstruction': {
+          'parts': [
+            {'text': systemPrompt},
+          ],
+        },
+        'generationConfig': {
+          'temperature': temperature,
+          'maxOutputTokens': maxTokens,
+        },
+      };
 
       final response = await http
           .post(
-            Uri.parse(_baseUrl),
-            headers: {
-              'Authorization': 'Bearer $_apiKey',
-              'Content-Type': 'application/json',
-              'HTTP-Referer': 'https://rei-seker-takip.app',
-              'X-Title': 'REI Seker Takip - Sofia AI',
-            },
-            body: jsonEncode({
-              'model': _model,
-              'messages': messages,
-              'temperature': 0.7,
-              'max_tokens': 300,
-            }),
+            Uri.parse(url),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final content =
-            data['choices']?[0]?['message']?['content'] as String? ?? '';
-
-        if (content.isNotEmpty) {
-          _history.add({'role': 'assistant', 'content': content});
-          AppLogger.instance.info(
-            'Sofia AI yanıt verdi (${content.length} karakter) [model: $_model]',
-          );
-          return content;
+        final candidates = data['candidates'] as List?;
+        if (candidates != null && candidates.isNotEmpty) {
+          final parts = candidates[0]['content']?['parts'] as List?;
+          if (parts != null && parts.isNotEmpty) {
+            final text = parts[0]['text'] as String? ?? '';
+            if (text.isNotEmpty) return text.trim();
+          }
         }
-        return 'Sofia şu an yanıt veremedi. Lütfen tekrar dene.';
-      } else if (response.statusCode == 401) {
-        AppLogger.instance.error('Sofia AI: API anahtarı geçersiz (401)');
-        return 'API anahtarı geçersiz. Ayarlar sayfasından API anahtarını kontrol et.';
+        return 'Sofia su an yanit veremedi. Tekrar dene.';
+      } else if (response.statusCode == 400) {
+        final data = jsonDecode(response.body);
+        final msg = data['error']?['message'] ?? '';
+        if (msg.toString().contains('API_KEY')) {
+          return 'API anahtari gecersiz. Ayarlardan kontrol et.';
+        }
+        return 'Istek hatasi. Farkli model deneyebilirsin.';
+      } else if (response.statusCode == 403) {
+        return 'API anahtari yetkisiz. Ayarlardan kontrol et.';
       } else if (response.statusCode == 429) {
-        AppLogger.instance.error('Sofia AI: Rate limit (429)');
-        return 'Çok fazla istek gönderildi. Biraz bekle ve tekrar dene.';
-      } else if (response.statusCode == 404 || response.statusCode == 400) {
-        AppLogger.instance.error(
-          'Sofia AI: Model bulunamadı veya hata ($_model) — ${response.statusCode}: ${response.body}',
-        );
-        return 'Seçilen model şu an kullanılamıyor. Ayarlardan farklı bir model seçmeyi dene. '
-            '(Hata: ${response.statusCode})';
+        return 'Cok fazla istek. Biraz bekle ve tekrar dene.';
       } else {
         AppLogger.instance.error(
-          'Sofia AI API hatası: ${response.statusCode} — ${response.body}',
+          'Gemini ${response.statusCode}: ${response.body}',
         );
-        return 'Bağlantı hatası oluştu (Kod: ${response.statusCode}). '
-            'İnternet bağlantını kontrol et ve tekrar dene.';
+        return 'Baglanti hatasi (${response.statusCode}). Tekrar dene.';
       }
     } catch (e, stack) {
-      AppLogger.instance.error('Sofia AI istisna', error: e, stack: stack);
-      final errorType = e.runtimeType.toString();
-      final errorMsg = e.toString();
-      if (errorMsg.contains('TimeoutException')) {
-        return 'Sofia yanıt vermedi, bağlantı zaman aşımına uğradı. İnternetini kontrol et.';
+      AppLogger.instance.error('Sofia istisna', error: e, stack: stack);
+      final msg = e.toString();
+      if (msg.contains('TimeoutException')) {
+        return 'Baglanti zaman asimi. Internetini kontrol et.';
       }
-      if (errorMsg.contains('SocketException') ||
-          errorMsg.contains('HandshakeException') ||
-          errorMsg.contains('OS Error')) {
-        return 'İnternet bağlantısı kurulamıyor. WiFi veya mobil verinizi kontrol edin. '
-            '(Hata: $errorType)';
+      if (msg.contains('SocketException') || msg.contains('OS Error')) {
+        return 'Internet baglantisi yok. WiFi veya mobil veriyi kontrol et.';
       }
-      return 'Sofia bir hata ile karşılaştı: $errorType. '
-          'Lütfen tekrar deneyin. Detay: ${errorMsg.length > 100 ? errorMsg.substring(0, 100) : errorMsg}';
+      return 'Hata: ${e.runtimeType}. Tekrar dene.';
     }
   }
 
-  /// Kan şekeri analizi yap — kayıtlı verileri Sofia'ya gönder.
+  // ─── Sohbet ─────────────────────────────────────────────
+
+  Future<String> ask(String userMessage) async {
+    _history.add({
+      'role': 'user',
+      'parts': [
+        {'text': userMessage},
+      ],
+    });
+    if (_history.length > _maxHistory) {
+      _history.removeRange(0, _history.length - _maxHistory);
+    }
+
+    final response = await _callGemini(
+      systemPrompt: _systemPrompt,
+      contents: _history,
+    );
+
+    _history.add({
+      'role': 'model',
+      'parts': [
+        {'text': response},
+      ],
+    });
+    return response;
+  }
+
+  // ─── Gören Sofia (Yemek Analizi) ───────────────────────
+
+  Future<String> analyzeFood(Uint8List imageBytes) async {
+    final base64Image = base64Encode(imageBytes);
+    final contents = [
+      {
+        'role': 'user',
+        'parts': [
+          {
+            'text':
+                'Bu tabaktaki yemegi analiz et. Karbonhidrat ve kalori tahmin et. Kan sekerimi hizla yukseltir mi?',
+          },
+          {
+            'inline_data': {'mime_type': 'image/jpeg', 'data': base64Image},
+          },
+        ],
+      },
+    ];
+    return _callGemini(
+      systemPrompt: _foodAnalysisPrompt,
+      contents: contents,
+      maxTokens: 500,
+    );
+  }
+
+  // ─── Biohacking ────────────────────────────────────────
+
+  Future<String> analyzeBiohacking({
+    required int ilacUyumYuzde,
+    required int olcumSayisi,
+    required int toplamKayit,
+    double? ortalamaGlukoz,
+  }) async {
+    final prompt =
+        'Ilac Alma Orani: %$ilacUyumYuzde, Olcum Sayisi: $olcumSayisi kez, '
+        'Toplam Kayit: $toplamKayit'
+        '${ortalamaGlukoz != null ? ', Ortalama: ${ortalamaGlukoz.toStringAsFixed(0)} mg/dL' : ''}. '
+        'Haftalik degerlendirme yap.';
+
+    return _callGemini(
+      systemPrompt: _biohackingPrompt,
+      contents: [
+        {
+          'role': 'user',
+          'parts': [
+            {'text': prompt},
+          ],
+        },
+      ],
+    );
+  }
+
+  // ─── Acil Durum ────────────────────────────────────────
+
+  Future<String> emergencyResponse() async {
+    return _callGemini(
+      systemPrompt: _emergencyPrompt,
+      contents: [
+        {
+          'role': 'user',
+          'parts': [
+            {
+              'text':
+                  'Kullanici panik butonuna basti! Konumunu yakinlarina SMS olarak attim. Kullaniciyla konus ve yonlendir.',
+            },
+          ],
+        },
+      ],
+      temperature: 0.3,
+      maxTokens: 200,
+    );
+  }
+
+  // ─── Doktor Raporu ─────────────────────────────────────
+
+  Future<String> generateDoctorReport({
+    required String hastaAdi,
+    required int toplamKayit,
+    required double ortalamaAclik,
+    required int hipoSayisi,
+    required int atlananGun,
+    String? ea1c,
+  }) async {
+    final prompt =
+        'Hasta: $hastaAdi. Son 30 Gun: Ort. Aclik ${ortalamaAclik.toStringAsFixed(0)} mg/dL, '
+        'Kayit: $toplamKayit, Hipo: $hipoSayisi kez, Atlanan: $atlananGun gun'
+        '${ea1c != null ? ', eA1c: %$ea1c' : ''}. Doktor icin ozetle.';
+
+    return _callGemini(
+      systemPrompt: _doctorReportPrompt,
+      contents: [
+        {
+          'role': 'user',
+          'parts': [
+            {'text': prompt},
+          ],
+        },
+      ],
+      temperature: 0.3,
+      maxTokens: 600,
+    );
+  }
+
+  // ─── İlaç Etkileşim ───────────────────────────────────
+
+  Future<String> checkDrugInteraction({
+    required List<String> mevcutIlaclar,
+    required String yeniMadde,
+  }) async {
+    final prompt =
+        'Mevcut Ilaclar: ${mevcutIlaclar.join(", ")}. '
+        'Yeni: $yeniMadde. Riskli mi?';
+
+    return _callGemini(
+      systemPrompt: _drugInteractionPrompt,
+      contents: [
+        {
+          'role': 'user',
+          'parts': [
+            {'text': prompt},
+          ],
+        },
+      ],
+      temperature: 0.3,
+    );
+  }
+
+  // ─── Kan Şekeri Analizi ────────────────────────────────
+
   Future<String> analyzeGlucose({
     required double avgGlucose,
     required int recordCount,
@@ -225,75 +378,28 @@ Eğer sana JSON verisi veya veritabanı çıktısı verilirse, bunu insan diline
     int? todayFasting,
     int? todayPostprandial,
   }) async {
-    final buffer = StringBuffer();
-    buffer.writeln('Kullanıcının kan şekeri verileri:');
-    buffer.writeln('Toplam kayıt sayısı: $recordCount');
-    buffer.writeln(
-      'Ortalama kan şekeri: ${avgGlucose.toStringAsFixed(0)} mg/dL',
-    );
-    if (ea1c != null) buffer.writeln('Tahmini HbA1c: %$ea1c');
-    if (stabilityLevel != null) {
-      buffer.writeln('Stabilite: $stabilityLevel');
-    }
-    if (todayFasting != null) {
-      buffer.writeln('Bugünkü açlık şekeri: $todayFasting mg/dL');
-    }
-    if (todayPostprandial != null) {
-      buffer.writeln('Bugünkü tokluk şekeri: $todayPostprandial mg/dL');
-    }
-    buffer.writeln(
-      'Bu verileri değerlendir. Genel bir yorum yap ve beslenme tavsiyesi ver.',
-    );
-
-    return ask(buffer.toString());
+    final buf = StringBuffer('Kan sekeri verileri: ');
+    buf.write('$recordCount kayit, ort ${avgGlucose.toStringAsFixed(0)} mg/dL');
+    if (ea1c != null) buf.write(', eA1c: %$ea1c');
+    if (stabilityLevel != null) buf.write(', stabilite: $stabilityLevel');
+    if (todayFasting != null) buf.write(', bugun aclik: $todayFasting');
+    if (todayPostprandial != null)
+      buf.write(', bugun tokluk: $todayPostprandial');
+    buf.write('. Degerlendir ve beslenme tavsiyesi ver.');
+    return ask(buf.toString());
   }
 
-  /// İlaç bilgisi sorgula.
   Future<String> askDrugInfo(String drugName) async {
-    return ask(
-      'Kullanıcı şu ilacı sordu: $drugName. '
-      'Bu ilacın ne işe yaradığını, genel kullanım amacını 2 ila 3 cümle ile, '
-      'tıbbi terimlere boğmadan anlat. Özellikle diyabet hastalarına etkisini belirt.',
-    );
+    return ask('$drugName ilaci hakkinda bilgi ver. Diyabete etkisini belirt.');
   }
 
-  /// İlaç yan etki bilgisi — OpenFDA verisini Sofia'ya yorumlat.
-  Future<String> analyzeDrugSideEffects({
-    required String drugName,
-    String? activeIngredient,
-    String? fdaWarnings,
-  }) async {
-    final buffer = StringBuffer();
-    buffer.writeln('İlaç: $drugName.');
-    if (activeIngredient != null) {
-      buffer.writeln('Etken Madde: $activeIngredient.');
-    }
-    if (fdaWarnings != null && fdaWarnings.isNotEmpty) {
-      buffer.writeln('OpenFDA Uyarıları (İngilizce): $fdaWarnings');
-    }
-    buffer.writeln(
-      'Kullanıcı bu ilacın yan etkilerini merak ediyor. '
-      'Kullanıcının diyabeti var, buna göre uyar. '
-      'Çok nadir görülen korkunç yan etkileri sayma, en yaygın olanları söyle. '
-      'Türkçe yanıt ver.',
-    );
-
-    return ask(buffer.toString());
-  }
-
-  /// Beslenme tavsiyesi.
   Future<String> askNutritionAdvice(String question) async {
-    return ask(
-      'Kullanıcı beslenme hakkında soruyor: $question. '
-      'Diyabet hastasına uygun beslenme tavsiyesi ver.',
-    );
+    return ask('Beslenme sorusu: $question. Diyabet hastasina tavsiye ver.');
   }
 }
 
-/// Sofia AI model tanımlayıcısı.
 class SofiaModel {
   final String id;
   final String name;
-
   const SofiaModel({required this.id, required this.name});
 }

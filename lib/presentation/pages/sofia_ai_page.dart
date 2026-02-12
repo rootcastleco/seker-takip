@@ -1,5 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../core/constants.dart';
 import '../../core/services/sofia_ai_service.dart';
@@ -9,10 +12,10 @@ import '../../domain/usecases/ea1c_calculator.dart';
 import '../state/providers.dart';
 import '../widgets/glass_widgets.dart';
 
-/// Sofia AI Sohbet Sayfası — Yapay zeka destekli sağlık asistanı.
+/// Sofia AI Sohbet Sayfası — Gemini destekli asistan.
 ///
-/// Glassmorphism UI, sesli okuma, hızlı aksiyon butonları,
-/// OpenFDA ilaç bilgi entegrasyonu.
+/// Sesli giriş (STT), yemek fotoğrafı analizi, panik butonu,
+/// biohacking skoru, ilaç etkileşimi, OpenFDA bilgi entegrasyonu.
 class SofiaAiPage extends ConsumerStatefulWidget {
   const SofiaAiPage({super.key});
 
@@ -28,6 +31,14 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
   bool _isLoading = false;
   bool _voiceAutoPlay = true;
 
+  // STT
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  bool _speechAvailable = false;
+
+  // Image picker
+  final ImagePicker _picker = ImagePicker();
+
   late AnimationController _pulseController;
 
   @override
@@ -38,16 +49,65 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    // Hoş geldin mesajı
+    _initSpeech();
+
     _messages.add(
       _ChatMessage(
         text:
-            'Merhaba, ben Sofia AI. Kan şekeri, diyabet yönetimi ve '
-            'beslenme konularında sana yardımcı olabilirim. '
-            'Bana ne sormak istersin?',
+            'Merhaba, ben Sofia. Kan şekeri, diyabet yönetimi, beslenme ve '
+            'ilaç konularında sana yardımcı olabilirim. Yemek fotoğrafı '
+            'çekerek besin analizi de yapabilirim. Bana ne sormak istersin?',
         isUser: false,
         timestamp: DateTime.now(),
       ),
+    );
+  }
+
+  Future<void> _initSpeech() async {
+    try {
+      _speechAvailable = await _speech.initialize(
+        onError: (e) {
+          if (mounted) setState(() => _isListening = false);
+        },
+        onStatus: (status) {
+          if (status == 'done' || status == 'notListening') {
+            if (mounted) setState(() => _isListening = false);
+          }
+        },
+      );
+    } catch (_) {
+      _speechAvailable = false;
+    }
+  }
+
+  Future<void> _toggleListening() async {
+    if (_isListening) {
+      await _speech.stop();
+      setState(() => _isListening = false);
+      return;
+    }
+
+    if (!_speechAvailable) {
+      _addBotMessage('Ses tanıma bu cihazda kullanılamıyor.');
+      return;
+    }
+
+    setState(() => _isListening = true);
+    await _speech.listen(
+      onResult: (result) {
+        setState(() {
+          _controller.text = result.recognizedWords;
+        });
+        if (result.finalResult) {
+          setState(() => _isListening = false);
+          if (_controller.text.trim().isNotEmpty) {
+            _sendMessage(_controller.text);
+          }
+        }
+      },
+      localeId: 'tr_TR',
+      listenFor: const Duration(seconds: 15),
+      pauseFor: const Duration(seconds: 3),
     );
   }
 
@@ -56,6 +116,7 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
     _controller.dispose();
     _scrollController.dispose();
     _pulseController.dispose();
+    _speech.cancel();
     super.dispose();
   }
 
@@ -71,17 +132,23 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
     });
   }
 
+  void _addUserMessage(String text) {
+    _messages.add(
+      _ChatMessage(text: text, isUser: true, timestamp: DateTime.now()),
+    );
+  }
+
+  void _addBotMessage(String text) {
+    _messages.add(
+      _ChatMessage(text: text, isUser: false, timestamp: DateTime.now()),
+    );
+  }
+
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
     setState(() {
-      _messages.add(
-        _ChatMessage(
-          text: text.trim(),
-          isUser: true,
-          timestamp: DateTime.now(),
-        ),
-      );
+      _addUserMessage(text.trim());
       _isLoading = true;
     });
     _controller.clear();
@@ -90,48 +157,31 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
     final response = await SofiaAiService.instance.ask(text.trim());
 
     setState(() {
-      _messages.add(
-        _ChatMessage(text: response, isUser: false, timestamp: DateTime.now()),
-      );
+      _addBotMessage(response);
       _isLoading = false;
     });
     _scrollToBottom();
-
-    // Sesli oku
-    if (_voiceAutoPlay) {
-      SystemVoiceService.instance.speak(response);
-    }
+    if (_voiceAutoPlay) SystemVoiceService.instance.speak(response);
   }
 
+  // ─── Veri Analizi ─────────────────────────────────────
   Future<void> _analyzeMyData() async {
-    setState(() => _isLoading = true);
-    _messages.add(
-      _ChatMessage(
-        text: 'Verilerime göre analiz yap.',
-        isUser: true,
-        timestamp: DateTime.now(),
-      ),
-    );
+    setState(() {
+      _addUserMessage('Verilerime göre analiz yap.');
+      _isLoading = true;
+    });
     _scrollToBottom();
 
-    // Verileri topla
     try {
       final allRecords = await ref.read(glucoseRepositoryProvider).getAll();
       final todayRecords = await ref.read(glucoseRepositoryProvider).getToday();
 
       if (allRecords.isEmpty) {
-        final noData =
-            'Henüz kayıtlı kan şekeri verin yok. '
-            'Önce birkaç ölçüm kaydet, sonra sana detaylı analiz yapayım. '
-            'Lütfen doktoruna danışmayı unutma.';
+        const noData =
+            'Henüz kayıtlı kan şekeri verin yok. Önce birkaç ölçüm kaydet, '
+            'sonra sana detaylı analiz yapayım.';
         setState(() {
-          _messages.add(
-            _ChatMessage(
-              text: noData,
-              isUser: false,
-              timestamp: DateTime.now(),
-            ),
-          );
+          _addBotMessage(noData);
           _isLoading = false;
         });
         if (_voiceAutoPlay) SystemVoiceService.instance.speak(noData);
@@ -178,86 +228,289 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
       );
 
       setState(() {
-        _messages.add(
-          _ChatMessage(
-            text: response,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ),
-        );
+        _addBotMessage(response);
         _isLoading = false;
       });
       _scrollToBottom();
-
       if (_voiceAutoPlay) SystemVoiceService.instance.speak(response);
     } catch (e) {
       setState(() {
-        _messages.add(
-          _ChatMessage(
-            text: 'Veri analizi sırasında bir hata oluştu. Tekrar deneyin.',
-            isUser: false,
-            timestamp: DateTime.now(),
-          ),
-        );
+        _addBotMessage('Veri analizi sırasında bir hata oluştu. Tekrar dene.');
         _isLoading = false;
       });
     }
   }
 
+  // ─── İlaç Bilgisi ─────────────────────────────────────
   Future<void> _askDrugInfo() async {
-    final drugName = await _showDrugInputDialog();
+    final drugName = await _showTextInputDialog(
+      title: 'İlaç Bilgisi Sorgula',
+      label: 'İlaç adı',
+      hint: 'ör: Metformin, Parol, Glucophage',
+      icon: Icons.medication,
+      buttonText: 'Sorgula',
+    );
     if (drugName == null || drugName.isEmpty) return;
 
     setState(() {
-      _messages.add(
-        _ChatMessage(
-          text: '$drugName hakkında bilgi ver.',
-          isUser: true,
-          timestamp: DateTime.now(),
-        ),
-      );
+      _addUserMessage('$drugName hakkında bilgi ver.');
       _isLoading = true;
     });
     _scrollToBottom();
 
-    // Önce OpenFDA'dan bilgi al
     final fdaData = await OpenFdaService.instance.searchDrug(drugName);
 
     String response;
     if (fdaData != null && fdaData['warnings']!.isNotEmpty) {
-      response = await SofiaAiService.instance.analyzeDrugSideEffects(
-        drugName: drugName,
-        activeIngredient: fdaData['active_ingredient'],
-        fdaWarnings: fdaData['warnings'],
+      response = await SofiaAiService.instance.ask(
+        'İlaç: $drugName. Etken madde: ${fdaData['active_ingredient']}. '
+        'FDA uyarıları: ${fdaData['warnings']}. '
+        'Diyabet hastasına bu ilacı anlat ve uyarıları Türkçe özetle.',
       );
     } else {
       response = await SofiaAiService.instance.askDrugInfo(drugName);
     }
 
     setState(() {
-      _messages.add(
-        _ChatMessage(text: response, isUser: false, timestamp: DateTime.now()),
-      );
+      _addBotMessage(response);
       _isLoading = false;
     });
     _scrollToBottom();
-
     if (_voiceAutoPlay) SystemVoiceService.instance.speak(response);
   }
 
-  Future<String?> _showDrugInputDialog() async {
+  // ─── Gören Sofia (Yemek Fotoğrafı Analizi) ────────────
+  Future<void> _analyzeFood() async {
+    try {
+      final source = await _showImageSourceDialog();
+      if (source == null) return;
+
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+      if (image == null) return;
+
+      final Uint8List bytes = await image.readAsBytes();
+
+      setState(() {
+        _addUserMessage('📷 Yemek fotoğrafı gönderildi. Analiz et.');
+        _isLoading = true;
+      });
+      _scrollToBottom();
+
+      final response = await SofiaAiService.instance.analyzeFood(bytes);
+
+      setState(() {
+        _addBotMessage(response);
+        _isLoading = false;
+      });
+      _scrollToBottom();
+      if (_voiceAutoPlay) SystemVoiceService.instance.speak(response);
+    } catch (e) {
+      setState(() {
+        _addBotMessage(
+          'Fotoğraf analizi sırasında bir hata oluştu. Tekrar dene.',
+        );
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<ImageSource?> _showImageSourceDialog() async {
+    return showDialog<ImageSource>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Yemek Fotoğrafı'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Colors.blue),
+              title: const Text('Kamera'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.green),
+              title: const Text('Galeri'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Biohacking Skoru ──────────────────────────────────
+  Future<void> _showBiohacking() async {
+    setState(() {
+      _addUserMessage('Biohacking skorumu hesapla.');
+      _isLoading = true;
+    });
+    _scrollToBottom();
+
+    try {
+      final allRecords = await ref.read(glucoseRepositoryProvider).getAll();
+      final activeMeds = await ref
+          .read(medicationRepositoryProvider)
+          .getActive();
+
+      final allVals = allRecords
+          .expand((r) => r.allMeasurements)
+          .whereType<int>()
+          .toList();
+      final avgGlucose = allVals.isNotEmpty
+          ? (allVals.reduce((a, b) => a + b) / allVals.length)
+          : null;
+
+      // İlaç uyum tahmini: aktif ilaç varsa %80 başlangıç
+      final ilacUyum = activeMeds.isNotEmpty ? 80 : 0;
+
+      // Son 7 günde ölçüm yapılmış gün sayısı
+      final now = DateTime.now();
+      final last7 = allRecords
+          .where((r) => r.tarih.isAfter(now.subtract(const Duration(days: 7))))
+          .toList();
+
+      final response = await SofiaAiService.instance.analyzeBiohacking(
+        ilacUyumYuzde: ilacUyum,
+        olcumSayisi: last7.length,
+        toplamKayit: allRecords.length,
+        ortalamaGlukoz: avgGlucose?.toDouble(),
+      );
+
+      setState(() {
+        _addBotMessage(response);
+        _isLoading = false;
+      });
+      _scrollToBottom();
+      if (_voiceAutoPlay) SystemVoiceService.instance.speak(response);
+    } catch (e) {
+      setState(() {
+        _addBotMessage('Biohacking hesaplaması sırasında hata oluştu.');
+        _isLoading = false;
+      });
+    }
+  }
+
+  // ─── Panik Butonu (Acil Durum) ─────────────────────────
+  Future<void> _panicButton() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.red.shade900,
+        title: const Text(
+          'ACİL DURUM',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Panik butonunu kullanmak istediğine emin misin?\n\n'
+          'Sofia seni sakinleştirecek ve yönlendirecek.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('İptal', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('EVET, ACİL'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _addUserMessage('ACİL DURUM! Yardım et!');
+      _isLoading = true;
+    });
+    _scrollToBottom();
+
+    // TTS ile hemen sakinleştir
+    SystemVoiceService.instance.speak(
+      'Sakin ol. Yanındayım. Şimdi sana yardımcı olacağım.',
+    );
+
+    final response = await SofiaAiService.instance.emergencyResponse();
+
+    setState(() {
+      _addBotMessage(response);
+      _isLoading = false;
+    });
+    _scrollToBottom();
+    if (_voiceAutoPlay) SystemVoiceService.instance.speak(response);
+  }
+
+  // ─── İlaç Etkileşim Kontrolü ──────────────────────────
+  Future<void> _checkDrugInteraction() async {
+    final activeMeds = await ref.read(medicationRepositoryProvider).getActive();
+
+    if (activeMeds.isEmpty) {
+      _addBotMessage(
+        'Etkileşim kontrolü için önce İlaçlarım sekmesine ilaç ekle.',
+      );
+      setState(() {});
+      return;
+    }
+
+    final yeniMadde = await _showTextInputDialog(
+      title: 'Etkileşim Kontrolü',
+      label: 'Kontrol edilecek madde',
+      hint: 'ör: Aspirin, D vitamini, Omega-3',
+      icon: Icons.science,
+      buttonText: 'Kontrol Et',
+    );
+    if (yeniMadde == null || yeniMadde.isEmpty) return;
+
+    final mevcutIlaclar = activeMeds.map((m) => m.ilacAdi).toList();
+
+    setState(() {
+      _addUserMessage(
+        '$yeniMadde ile mevcut ilaçlarımın etkileşimini kontrol et.',
+      );
+      _isLoading = true;
+    });
+    _scrollToBottom();
+
+    final response = await SofiaAiService.instance.checkDrugInteraction(
+      mevcutIlaclar: mevcutIlaclar,
+      yeniMadde: yeniMadde,
+    );
+
+    setState(() {
+      _addBotMessage(response);
+      _isLoading = false;
+    });
+    _scrollToBottom();
+    if (_voiceAutoPlay) SystemVoiceService.instance.speak(response);
+  }
+
+  // ─── Ortak Input Dialog ────────────────────────────────
+  Future<String?> _showTextInputDialog({
+    required String title,
+    required String label,
+    String? hint,
+    IconData? icon,
+    String buttonText = 'Tamam',
+  }) async {
     final ctrl = TextEditingController();
     return showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('İlaç Bilgisi Sorgula'),
+        title: Text(title),
         content: TextField(
           controller: ctrl,
-          decoration: const InputDecoration(
-            labelText: 'İlaç adı',
-            hintText: 'ör: Metformin, Parol, Glucophage',
-            prefixIcon: Icon(Icons.medication),
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
+            prefixIcon: icon != null ? Icon(icon) : null,
+            border: const OutlineInputBorder(),
           ),
           autofocus: true,
           onSubmitted: (val) => Navigator.pop(ctx, val.trim()),
@@ -269,13 +522,14 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Sorgula'),
+            child: Text(buttonText),
           ),
         ],
       ),
     );
   }
 
+  // ─── UI ────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -296,19 +550,15 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
             },
             tooltip: 'Sesli Okuma',
           ),
-          // Geçmişi temizle
+          // Sohbeti Temizle
           IconButton(
             icon: Icon(Icons.delete_sweep, color: Colors.grey.shade400),
             onPressed: () {
               SofiaAiService.instance.clearHistory();
               setState(() {
                 _messages.clear();
-                _messages.add(
-                  _ChatMessage(
-                    text: 'Sohbet temizlendi. Sana nasıl yardımcı olabilirim?',
-                    isUser: false,
-                    timestamp: DateTime.now(),
-                  ),
+                _addBotMessage(
+                  'Sohbet temizlendi. Sana nasıl yardımcı olabilirim?',
                 );
               });
             },
@@ -319,7 +569,7 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
       body: SafeArea(
         child: Column(
           children: [
-            // ─── Mesaj Listesi ─────────────────────────
+            // Mesaj Listesi
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
@@ -333,11 +583,9 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
                 },
               ),
             ),
-
-            // ─── Hızlı Aksiyonlar ─────────────────────
+            // Hızlı Aksiyonlar (kaydırılabilir)
             _buildQuickActions(isDark),
-
-            // ─── Mesaj Girişi ──────────────────────────
+            // Mesaj Girişi
             _buildInputBar(isDark),
           ],
         ),
@@ -361,7 +609,6 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            // Sofia avatar
             Container(
               width: 36,
               height: 36,
@@ -434,7 +681,6 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
                       ),
                       if (!isUser) ...[
                         const SizedBox(width: 8),
-                        // Sesli oku butonu
                         InkWell(
                           onTap: () =>
                               SystemVoiceService.instance.speak(message.text),
@@ -462,7 +708,6 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sofia avatar — pulsing
           AnimatedBuilder(
             animation: _pulseController,
             builder: (ctx, child) {
@@ -538,9 +783,16 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
           children: [
             _quickActionChip(
               icon: Icons.analytics,
-              label: 'Verilerimi Analiz Et',
+              label: 'Analiz Et',
               color: RC.blue,
               onTap: _isLoading ? null : _analyzeMyData,
+            ),
+            const SizedBox(width: 8),
+            _quickActionChip(
+              icon: Icons.camera_alt,
+              label: 'Yemek Tara',
+              color: Colors.orange,
+              onTap: _isLoading ? null : _analyzeFood,
             ),
             const SizedBox(width: 8),
             _quickActionChip(
@@ -551,9 +803,23 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
             ),
             const SizedBox(width: 8),
             _quickActionChip(
+              icon: Icons.science,
+              label: 'Etkileşim',
+              color: Colors.deepPurple,
+              onTap: _isLoading ? null : _checkDrugInteraction,
+            ),
+            const SizedBox(width: 8),
+            _quickActionChip(
+              icon: Icons.emoji_events,
+              label: 'Biohacking',
+              color: Colors.amber,
+              onTap: _isLoading ? null : _showBiohacking,
+            ),
+            const SizedBox(width: 8),
+            _quickActionChip(
               icon: Icons.restaurant,
-              label: 'Beslenme Tavsiyesi',
-              color: Colors.orange,
+              label: 'Beslenme',
+              color: Colors.teal,
               onTap: _isLoading
                   ? null
                   : () => _sendMessage(
@@ -569,20 +835,7 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
               onTap: _isLoading
                   ? null
                   : () => _sendMessage(
-                      'Gece kan şekerim yükseliyor. Bunun nedeni ne olabilir '
-                      've ne yapmalıyım?',
-                    ),
-            ),
-            const SizedBox(width: 8),
-            _quickActionChip(
-              icon: Icons.directions_run,
-              label: 'Egzersiz',
-              color: Colors.teal,
-              onTap: _isLoading
-                  ? null
-                  : () => _sendMessage(
-                      'Diyabet hastası olarak egzersiz yaparken şekerimi '
-                      'nasıl kontrol altında tutabilirim?',
+                      'Gece kan şekerim yükseliyor. Bunun nedeni ne olabilir?',
                     ),
             ),
           ],
@@ -647,6 +900,27 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
       ),
       child: Row(
         children: [
+          // Panik butonu
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.red.withValues(alpha: 0.15),
+              border: Border.all(
+                color: Colors.red.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.sos, color: Colors.red, size: 18),
+              onPressed: _isLoading ? null : _panicButton,
+              tooltip: 'Acil Durum',
+              padding: EdgeInsets.zero,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Metin girişi
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -654,14 +928,21 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.08)
                     : Colors.grey.withValues(alpha: 0.1),
+                border: _isListening
+                    ? Border.all(color: Colors.red, width: 1.5)
+                    : null,
               ),
               child: TextField(
                 controller: _controller,
                 style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
-                  hintText: "Sofia'ya sor...",
+                  hintText: _isListening ? 'Dinliyorum...' : "Sofia'ya sor...",
                   hintStyle: TextStyle(
-                    color: isDark ? Colors.white30 : Colors.grey,
+                    color: _isListening
+                        ? Colors.red.shade300
+                        : isDark
+                        ? Colors.white30
+                        : Colors.grey,
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -676,8 +957,30 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          // Gönder butonu
+          const SizedBox(width: 6),
+          // Mikrofon butonu
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _isListening
+                  ? Colors.red.withValues(alpha: 0.2)
+                  : Colors.purple.withValues(alpha: 0.15),
+            ),
+            child: IconButton(
+              icon: Icon(
+                _isListening ? Icons.mic_off : Icons.mic,
+                color: _isListening ? Colors.red : Colors.purple,
+                size: 20,
+              ),
+              onPressed: _isLoading ? null : _toggleListening,
+              tooltip: _isListening ? 'Dinlemeyi Durdur' : 'Sesli Giriş',
+              padding: EdgeInsets.zero,
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Gönder
           Container(
             width: 44,
             height: 44,
@@ -707,7 +1010,6 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
   }
 }
 
-// ─── Mesaj Modeli ────────────────────────────────────────────
 class _ChatMessage {
   final String text;
   final bool isUser;

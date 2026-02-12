@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../presentation/pages/profile_page.dart';
 import '../presentation/pages/record_edit_page.dart';
+import '../presentation/pages/records_table_page.dart';
 import '../presentation/pages/export_page.dart';
 import '../presentation/pages/import_page.dart';
 import '../presentation/pages/targets_page.dart';
@@ -18,6 +19,7 @@ class AppRoutes {
 
   static const String profile = '/profile';
   static const String recordEdit = '/record/edit';
+  static const String records = '/records';
   static const String export = '/export';
   static const String import = '/import';
   static const String targets = '/targets';
@@ -34,6 +36,7 @@ class AppRoutes {
     diagnostics: (_) => const DiagnosticsPage(),
     about: (_) => const AboutPage(),
     medications: (_) => const _MedicationsPageWrapper(),
+    records: (_) => const _RecordsPageWrapper(),
     sofiaAi: (_) => const SofiaAiPage(),
   };
 
@@ -58,6 +61,19 @@ class _MedicationsPageWrapper extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('İlaçlarım')),
       body: const MedicationsPage(),
+    );
+  }
+}
+
+/// Kayıt Defteri wrapper — Scaffold ile tam sayfa.
+class _RecordsPageWrapper extends StatelessWidget {
+  const _RecordsPageWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kayıt Defteri')),
+      body: const RecordsTablePage(),
     );
   }
 }

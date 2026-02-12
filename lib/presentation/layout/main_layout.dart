@@ -4,15 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
 import '../../app/routes.dart';
 import '../pages/dashboard_page.dart';
-import '../pages/records_table_page.dart';
+import '../pages/medications_page.dart';
 import '../pages/sofia_ai_page.dart';
 import '../pages/settings_page.dart';
 import '../widgets/glass_widgets.dart';
 
 /// Ana düzen — BottomNavigationBar + IndexedStack.
 ///
-/// Tablar: Ana Sayfa, Kayıt Defteri, Analiz, Ayarlar.
-/// Ortada FAB: Yeni kayıt ekleme (manuel + OCR).
+/// Tablar: Ana Sayfa, İlaçlarım, Sofia, Ayarlar.
+/// Ortada FAB: Yeni kayıt ekleme (manuel + OCR) + Kayıt Defteri.
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key});
 
@@ -25,7 +25,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   static const List<Widget> _pages = [
     DashboardPage(),
-    RecordsTablePage(),
+    MedicationsPage(),
     SofiaAiPage(),
     SettingsPage(),
   ];
@@ -89,8 +89,17 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 color: RC.accentGreen,
                 onTap: () {
                   Navigator.pop(context);
-                  // Navigate to record edit — OCR is accessible from there
                   Navigator.pushNamed(context, AppRoutes.recordEdit);
+                },
+              ),
+              // Kayıt Defteri
+              GlassListTile(
+                icon: Icons.list_alt_rounded,
+                label: Tr.tabKayitDefteri,
+                color: RC.accent,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.records);
                 },
               ),
             ],
@@ -136,7 +145,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(0, Icons.home_rounded, Tr.tabAnaSayfa, isDark),
-              _navItem(1, Icons.list_alt_rounded, Tr.tabKayitDefteri, isDark),
+              _navItem(1, Icons.medication_rounded, Tr.tabIlaclarim, isDark),
               const SizedBox(width: 56), // Space for FAB
               _navItem(2, Icons.auto_awesome, Tr.tabSofia, isDark),
               _navItem(3, Icons.settings_rounded, Tr.tabAyarlar, isDark),

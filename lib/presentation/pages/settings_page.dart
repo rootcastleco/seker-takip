@@ -124,10 +124,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           onTap: () => Navigator.pushNamed(context, AppRoutes.targets),
         ),
         GlassListTile(
-          icon: Icons.medication,
-          label: Tr.ilacListesi,
+          icon: Icons.list_alt_rounded,
+          label: Tr.tabKayitDefteri,
           color: RC.accent,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.medications),
+          onTap: () => Navigator.pushNamed(context, AppRoutes.records),
         ),
 
         const SizedBox(height: 8),
@@ -142,7 +142,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         GlassListTile(
           icon: Icons.vpn_key,
-          label: 'API Anahtarı',
+          label: 'Gemini API Anahtarı',
           color: Colors.orange,
           onTap: () => _showApiKeyDialog(context, isDark),
         ),
@@ -337,7 +337,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? RC.bgDark2 : Colors.white,
         title: Text(
-          'OpenRouter API Anahtarı',
+          'Google Gemini API Anahtarı',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : RC.black,
@@ -359,10 +359,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               controller: controller,
               decoration: InputDecoration(
                 labelText: 'Yeni API Anahtarı',
-                hintText: 'sk-or-v1-...',
+                hintText: 'AIzaSy...',
                 prefixIcon: const Icon(Icons.vpn_key),
                 border: const OutlineInputBorder(),
-                helperText: 'openrouter.ai adresinden alabilirsiniz',
+                helperText: 'Google AI Studio\'dan alabilirsiniz',
                 helperStyle: TextStyle(
                   fontSize: 11,
                   color: isDark ? Colors.white38 : Colors.grey,
