@@ -12,7 +12,7 @@ import '../../data/export_import/xlsx_exporter.dart';
 import '../../data/export_import/json_backup_exporter.dart';
 import '../../data/export_import/pdf_report_generator.dart';
 import '../state/providers.dart';
-import '../widgets/rootcastle_app_bar.dart';
+import '../widgets/glass_widgets.dart';
 
 /// Dışa aktarma sayfası.
 class ExportPage extends ConsumerStatefulWidget {
@@ -100,15 +100,15 @@ class _ExportPageState extends ConsumerState<ExportPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const RootcastleAppBar(title: Tr.disaAktar),
+    return GlassScaffold(
+      appBar: const GlassAppBar(title: Tr.disaAktar),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 50, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(Tr.formatSec, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
+            GlassSectionHeader(title: Tr.formatSec, icon: Icons.file_copy),
+            const SizedBox(height: 8),
             _FormatTile(
               title: Tr.csvFormat,
               subtitle: 'CSV dosyası',
@@ -138,16 +138,10 @@ class _ExportPageState extends ConsumerState<ExportPage> {
               onChanged: (v) => setState(() => _selectedFormat = v!),
             ),
             const Spacer(),
-            ElevatedButton.icon(
+            GlassButton(
               onPressed: _exporting ? null : _export,
-              icon: _exporting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.file_download),
-              label: Text(_exporting ? Tr.yukle : Tr.disaAktar),
+              icon: _exporting ? null : Icons.file_download,
+              label: _exporting ? Tr.yukle : Tr.disaAktar,
             ),
           ],
         ),
@@ -173,12 +167,18 @@ class _FormatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RadioListTile<String>(
-      title: Text(title),
-      subtitle: Text(subtitle),
-      value: value,
-      groupValue: groupValue,
-      onChanged: onChanged,
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      margin: const EdgeInsets.only(bottom: 8),
+      blur: 8,
+      child: RadioListTile<String>(
+        title: Text(title),
+        subtitle: Text(subtitle),
+        value: value,
+        groupValue: groupValue,
+        onChanged: onChanged,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 }

@@ -5,7 +5,7 @@ import '../../core/constants.dart';
 import '../../core/validators.dart';
 import '../../domain/entities/profile.dart';
 import '../state/providers.dart';
-import '../widgets/rootcastle_app_bar.dart';
+import '../widgets/glass_widgets.dart';
 
 /// Kişisel Bilgiler (Profil) sayfası.
 class ProfilePage extends ConsumerStatefulWidget {
@@ -101,76 +101,90 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(profileProvider);
 
-    return Scaffold(
-      appBar: const RootcastleAppBar(title: Tr.kisiselBilgiler),
+    return GlassScaffold(
+      appBar: const GlassAppBar(title: Tr.kisiselBilgiler),
       body: profileAsync.when(
         data: (profile) {
           _fillForm(profile);
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _isimCtrl,
-                    decoration: const InputDecoration(
-                      labelText: Tr.isimSoyisim,
+            padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 50, 16, 24),
+            child: GlassCard(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _isimCtrl,
+                      decoration: glassInputDecoration(
+                        context: context,
+                        label: Tr.isimSoyisim,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _yasCtrl,
-                    decoration: const InputDecoration(labelText: Tr.yas),
-                    keyboardType: TextInputType.number,
-                    validator: validateAge,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _kiloCtrl,
-                    decoration: const InputDecoration(labelText: Tr.kilo),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _yasCtrl,
+                      decoration: glassInputDecoration(
+                        context: context,
+                        label: Tr.yas,
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: validateAge,
                     ),
-                    validator: validateWeight,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _doktorCtrl,
-                    decoration: const InputDecoration(labelText: Tr.doktor),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _hemsireCtrl,
-                    decoration: const InputDecoration(
-                      labelText: Tr.diyabetEgitimHemsiresi,
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _kiloCtrl,
+                      decoration: glassInputDecoration(
+                        context: context,
+                        label: Tr.kilo,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator: validateWeight,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _telefonCtrl,
-                    decoration: const InputDecoration(
-                      labelText: Tr.cepTelefonu,
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _doktorCtrl,
+                      decoration: glassInputDecoration(
+                        context: context,
+                        label: Tr.doktor,
+                      ),
                     ),
-                    keyboardType: TextInputType.phone,
-                    validator: validatePhone,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _adresCtrl,
-                    decoration: const InputDecoration(labelText: Tr.adres),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _hemsireCtrl,
+                      decoration: glassInputDecoration(
+                        context: context,
+                        label: Tr.diyabetEgitimHemsiresi,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _telefonCtrl,
+                      decoration: glassInputDecoration(
+                        context: context,
+                        label: Tr.cepTelefonu,
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: validatePhone,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _adresCtrl,
+                      decoration: glassInputDecoration(
+                        context: context,
+                        label: Tr.adres,
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 24),
+                    GlassButton(
                       onPressed: _save,
-                      icon: const Icon(Icons.save),
-                      label: const Text(Tr.kaydet),
+                      icon: Icons.save,
+                      label: Tr.kaydet,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );

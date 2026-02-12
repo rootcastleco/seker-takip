@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../../core/constants.dart';
 import '../../core/logger/logger.dart';
-import '../widgets/rootcastle_app_bar.dart';
+import '../widgets/glass_widgets.dart';
 
 /// Tanılama (Diagnostics) sayfası — logları gör, paylaş.
 class DiagnosticsPage extends StatefulWidget {
@@ -61,8 +61,10 @@ class _DiagnosticsPageState extends State<DiagnosticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: RootcastleAppBar(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GlassScaffold(
+      appBar: GlassAppBar(
         title: Tr.tanilamaLoglari,
         actions: [
           IconButton(
@@ -79,22 +81,40 @@ class _DiagnosticsPageState extends State<DiagnosticsPage> {
       ),
       body: Column(
         children: [
-          // PII Maskeleme toggle
-          SwitchListTile(
-            title: const Text(Tr.piiMaskele),
-            value: _maskPii,
-            onChanged: (v) {
-              setState(() => _maskPii = v);
-              AppLogger.instance.maskPiiEnabled = v;
-            },
+          SizedBox(
+            height: kToolbarHeight + MediaQuery.of(context).padding.top + 8,
           ),
-          const Divider(height: 1),
+          // PII Maskeleme toggle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GlassCard(
+              padding: EdgeInsets.zero,
+              child: SwitchListTile(
+                title: const Text(Tr.piiMaskele),
+                value: _maskPii,
+                onChanged: (v) {
+                  setState(() => _maskPii = v);
+                  AppLogger.instance.maskPiiEnabled = v;
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
           // Log satırları
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _logLines.isEmpty
-                ? const Center(child: Text('Henüz log kaydı yok.'))
+                ? Center(
+                    child: Text(
+                      'Henüz log kaydı yok.',
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.grey,
+                      ),
+                    ),
+                  )
                 : ListView.builder(
                     padding: const EdgeInsets.all(8),
                     itemCount: _logLines.length,
@@ -103,9 +123,12 @@ class _DiagnosticsPageState extends State<DiagnosticsPage> {
                         padding: const EdgeInsets.symmetric(vertical: 1),
                         child: Text(
                           _logLines[index],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 11,
+                            color: isDark
+                                ? RC.accent.withValues(alpha: 0.8)
+                                : Colors.black87,
                           ),
                         ),
                       );

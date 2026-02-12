@@ -1,134 +1,266 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/routes.dart';
 import '../../core/constants.dart';
-import '../../app/theme.dart';
-import '../widgets/rootcastle_app_bar.dart';
+import '../../core/services/voice_service.dart';
+import '../widgets/glass_widgets.dart';
 
-/// Ayarlar ve Kullanım Kılavuzu sayfası.
-class SettingsPage extends StatelessWidget {
+/// Konsolide Ayarlar sayfası — Tab 4.
+///
+/// İçerik: Profil, Yedekleme Merkezi, Raporlama, Sesli Asistan toggle,
+/// İdeal Hedefler, Tanılama, Kullanım Kılavuzu, Hakkında.
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
 
-    return Scaffold(
-      appBar: const RootcastleAppBar(title: Tr.ayarlar),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // ─── Kullanım Kılavuzu ──────────────────────
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.menu_book,
-                        color: RootcastleColors.blue,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        Tr.kullanimKilavuzu,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: RootcastleColors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _guideSection(
-                    '1. Yeni Kayıt Ekleme',
-                    'Ana sayfadan "Yeni Kayıt Ekle" butonuna tıklayın. Tarih seçin, '
-                        'ölçüm değerlerinizi (sabah açlık, tokluk vb.) girin ve kaydedin. '
-                        'En az bir ölçüm alanı doldurulmalıdır.',
-                  ),
-                  _guideSection(
-                    '2. Tokluk Hatırlatıcısı',
-                    'Bir açlık değeri girdikten sonra uygulama size "Tokluk hatırlatıcısı '
-                        'kurulsun mu?" diye soracaktır. Onaylarsanız 2 saat sonra bildirim '
-                        'alırsınız.',
-                  ),
-                  _guideSection(
-                    '3. Kayıtları Görüntüleme',
-                    '"Kayıtlar" sayfasında tüm ölçümlerinizi tablo halinde görüntüleyin. '
-                        'Tarih aralığı filtresi ile istediğiniz döneme ait verileri '
-                        'inceleyebilirsiniz.',
-                  ),
-                  _guideSection(
-                    '4. Tahmini HbA1c (eA1c)',
-                    'Ana sayfada son 90 günlük verilerinize göre tahmini HbA1c değeri '
-                        'hesaplanır. En az 15 kayıt gereklidir. Bu değer laboratuvar '
-                        'sonucu yerine geçmez.',
-                  ),
-                  _guideSection(
-                    '5. Stabilite Göstergesi',
-                    'Glukoz değerlerinizdeki dalgalanma standart sapma (SD) ile ölçülür. '
-                        'Yeşil = Stabil, Sarı = Orta, Kırmızı = Yüksek değişkenlik.',
-                  ),
-                  _guideSection(
-                    '6. Dışa Aktarma',
-                    'Verilerinizi CSV, Excel (XLSX), JSON veya profesyonel PDF rapor '
-                        'olarak dışa aktarabilirsiniz. PDF rapor doktorunuza göstermek '
-                        'için idealdir.',
-                  ),
-                  _guideSection(
-                    '7. İçe Aktarma',
-                    'JSON yedek dosyanızı geri yükleyebilirsiniz. Dosya bütünlüğü '
-                        'SHA-256 checksum ile doğrulanır.',
-                  ),
-                  _guideSection(
-                    '8. Kişisel Bilgiler',
-                    'İsim, yaş, kilo, doktor ve hemşire bilgilerinizi girin. Bu '
-                        'veriler PDF raporunuzda kullanılır.',
-                  ),
-                  _guideSection(
-                    '9. İdeal Hedefler',
-                    'Diyabet için ideal kan şekeri aralıklarını görüntüleyin. '
-                        'Açlık < 100 mg/dL, Tokluk < 140 mg/dL.',
-                  ),
-                ],
-              ),
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  bool _voiceEnabled = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      children: [
+        // ─── Başlık ───────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            Tr.tabAyarlar,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : RC.black,
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 16),
+        ),
 
-          // ─── Sıkça Sorulan Sorular ─────────────────
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Sık Sorulan Sorular',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: RootcastleColors.blue,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _faqTile(
-                    'Verilerim güvende mi?',
-                    'Evet. Tüm verileriniz cihazınızda saklanır, hiçbir sunucuya '
-                        'gönderilmez. Yedeklemeler SHA-256 ile korunur.',
-                  ),
-                  _faqTile(
-                    'İnternet bağlantısı gerekli mi?',
-                    'Hayır. Uygulama tamamen çevrimdışı çalışır.',
-                  ),
-                  _faqTile(
-                    'eA1c nedir?',
-                    'Tahmini HbA1c, son 90 günlük ortalama kan şekeri değerinize göre '
-                        'hesaplanan bir göstergedir. Laboratuvar sonucu yerine geçmez.',
-                  ),
-                ],
+        // ─── Profil ──────────────────────────────────
+        GlassSectionHeader(title: 'Hesap', icon: Icons.person),
+        GlassListTile(
+          icon: Icons.person_outline,
+          label: Tr.profilBilgileri,
+          color: RC.accent,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
+        ),
+
+        const SizedBox(height: 8),
+
+        // ─── Veri Yönetimi ───────────────────────────
+        GlassSectionHeader(title: 'Veri Yönetimi', icon: Icons.storage),
+        GlassListTile(
+          icon: Icons.backup,
+          label: Tr.yedeklemeMerkezi,
+          color: RC.blue,
+          onTap: () => _showBackupSheet(context, isDark),
+        ),
+        GlassListTile(
+          icon: Icons.picture_as_pdf,
+          label: Tr.raporlama,
+          color: Colors.red.shade400,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.export),
+        ),
+
+        const SizedBox(height: 8),
+
+        // ─── Tercihler ──────────────────────────────
+        GlassSectionHeader(title: 'Tercihler', icon: Icons.tune),
+        // Sesli Asistan Toggle
+        GlassCard(
+          padding: EdgeInsets.zero,
+          margin: const EdgeInsets.only(bottom: 8),
+          borderRadius: 12,
+          blur: 8,
+          child: SwitchListTile(
+            secondary: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: RC.accentGreen.withValues(alpha: isDark ? 0.15 : 0.1),
               ),
+              child: Icon(
+                Icons.record_voice_over,
+                color: RC.accentGreen,
+                size: 22,
+              ),
+            ),
+            title: Text(
+              Tr.sesliAsistan,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : RC.black,
+              ),
+            ),
+            subtitle: Text(
+              Tr.sesliAsistanAciklama,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white54 : Colors.grey,
+              ),
+            ),
+            value: _voiceEnabled,
+            activeColor: RC.accentGreen,
+            onChanged: (val) {
+              setState(() => _voiceEnabled = val);
+              if (!val) {
+                SystemVoiceService.instance.stop();
+              }
+            },
+          ),
+        ),
+        GlassListTile(
+          icon: Icons.flag,
+          label: Tr.idealHedefler,
+          color: RC.accentGreen,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.targets),
+        ),
+
+        const SizedBox(height: 8),
+
+        // ─── Sistem ────────────────────────────────
+        GlassSectionHeader(title: 'Sistem', icon: Icons.settings),
+        GlassListTile(
+          icon: Icons.bug_report,
+          label: Tr.tanilamaLoglari,
+          color: Colors.grey,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.diagnostics),
+        ),
+        GlassListTile(
+          icon: Icons.menu_book,
+          label: Tr.kullanimKilavuzu,
+          color: RC.accent,
+          onTap: () => _showGuide(context, isDark),
+        ),
+        GlassListTile(
+          icon: Icons.info_outline,
+          label: Tr.hakkinda,
+          color: RC.blue,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.about),
+        ),
+      ],
+    );
+  }
+
+  /// Yedekleme alt sayfası — Export / Import seçimi.
+  void _showBackupSheet(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? RC.bgDark2 : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                Tr.yedeklemeMerkezi,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : RC.black,
+                ),
+              ),
+              const SizedBox(height: 24),
+              GlassListTile(
+                icon: Icons.file_download,
+                label: Tr.disaAktar,
+                color: RC.blue,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.export);
+                },
+              ),
+              GlassListTile(
+                icon: Icons.file_upload,
+                label: Tr.iceAktar,
+                color: RC.accentGreen,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.import);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Kullanım Kılavuzu dialog.
+  void _showGuide(BuildContext context, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: isDark ? RC.bgDark2 : Colors.white,
+        title: Text(
+          Tr.kullanimKilavuzu,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : RC.black,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _guideItem(
+                '1.',
+                'Ana Sayfa\'dan + butonuna tıklayarak yeni kayıt ekleyin.',
+                isDark,
+              ),
+              _guideItem(
+                '2.',
+                'Kayıt Defteri sekmesinde tüm ölçümlerinizi görüntüleyin.',
+                isDark,
+              ),
+              _guideItem(
+                '3.',
+                'Analiz sekmesinde grafikler ve eA1c değerinizi takip edin.',
+                isDark,
+              ),
+              _guideItem(
+                '4.',
+                'Verilerinizi CSV, Excel, JSON veya PDF olarak dışa aktarın.',
+                isDark,
+              ),
+              _guideItem(
+                '5.',
+                'Ölçüm cihazından OCR ile otomatik değer okuyun.',
+                isDark,
+              ),
+              _guideItem(
+                '6.',
+                'Tüm verileriniz cihazınızda saklanır, internet gerekmez.',
+                isDark,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              Tr.tamam,
+              style: TextStyle(color: isDark ? RC.accent : RC.blue),
             ),
           ),
         ],
@@ -136,40 +268,31 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  static Widget _guideSection(String title, String body) {
+  static Widget _guideItem(String num, String text, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style: const TextStyle(
+            num,
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: RootcastleColors.green,
+              color: isDark ? RC.accentGreen : RC.green,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(body, style: const TextStyle(fontSize: 13)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  static Widget _faqTile(String question, String answer) {
-    return ExpansionTile(
-      tilePadding: EdgeInsets.zero,
-      title: Text(
-        question,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-      ),
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Text(answer, style: const TextStyle(fontSize: 13)),
-        ),
-      ],
     );
   }
 }

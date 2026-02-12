@@ -7,7 +7,7 @@ import '../../core/formatting.dart';
 import '../../core/logger/logger.dart';
 import '../../data/export_import/json_backup_importer.dart';
 import '../state/providers.dart';
-import '../widgets/rootcastle_app_bar.dart';
+import '../widgets/glass_widgets.dart';
 
 /// İçe aktarma sayfası.
 class ImportPage extends ConsumerStatefulWidget {
@@ -113,81 +113,80 @@ class _ImportPageState extends ConsumerState<ImportPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const RootcastleAppBar(title: Tr.iceAktar),
+    return GlassScaffold(
+      appBar: const GlassAppBar(title: Tr.iceAktar),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 50, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ElevatedButton.icon(
+            GlassButton(
               onPressed: _pickFile,
-              icon: const Icon(Icons.folder_open),
-              label: const Text(Tr.dosyaSec),
+              icon: Icons.folder_open,
+              label: Tr.dosyaSec,
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
-              Card(
-                color: Theme.of(context).colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                    ),
-                  ),
+              GlassCard(
+                borderColor: Colors.red.withValues(alpha: 0.4),
+                backgroundColor: Colors.red.withValues(alpha: 0.1),
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.redAccent),
                 ),
               ),
             ],
             if (_importResult != null) ...[
               const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        Tr.importOzet,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text('${Tr.kayitSayisi}: ${_importResult!.recordCount}'),
-                      Text(
-                        '${Tr.exportTarihi}: ${formatDateTime(_importResult!.exportedAt.toLocal())}',
-                      ),
-                    ],
-                  ),
+              GlassCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GlassSectionHeader(
+                      title: Tr.importOzet,
+                      icon: Icons.summarize,
+                    ),
+                    const SizedBox(height: 8),
+                    Text('${Tr.kayitSayisi}: ${_importResult!.recordCount}'),
+                    Text(
+                      '${Tr.exportTarihi}: ${formatDateTime(_importResult!.exportedAt.toLocal())}',
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
-              Text(Tr.importMod, style: Theme.of(context).textTheme.titleSmall),
-              RadioListTile<String>(
-                title: const Text(Tr.birlestir),
-                subtitle: const Text('Mevcut kayıtlara ekler'),
-                value: 'merge',
-                groupValue: _importMode,
-                onChanged: (v) => setState(() => _importMode = v!),
+              GlassSectionHeader(title: Tr.importMod, icon: Icons.swap_horiz),
+              GlassCard(
+                padding: EdgeInsets.zero,
+                child: RadioListTile<String>(
+                  title: const Text(Tr.birlestir),
+                  subtitle: const Text('Mevcut kayıtlara ekler'),
+                  value: 'merge',
+                  groupValue: _importMode,
+                  onChanged: (v) => setState(() => _importMode = v!),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-              RadioListTile<String>(
-                title: const Text(Tr.ustYaz),
-                subtitle: const Text('Mevcut kayıtları siler'),
-                value: 'replace',
-                groupValue: _importMode,
-                onChanged: (v) => setState(() => _importMode = v!),
+              GlassCard(
+                padding: EdgeInsets.zero,
+                child: RadioListTile<String>(
+                  title: const Text(Tr.ustYaz),
+                  subtitle: const Text('Mevcut kayıtları siler'),
+                  value: 'replace',
+                  groupValue: _importMode,
+                  onChanged: (v) => setState(() => _importMode = v!),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               const Spacer(),
-              ElevatedButton.icon(
+              GlassButton(
                 onPressed: _importing ? null : _executeImport,
-                icon: _importing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.file_upload),
-                label: Text(_importing ? Tr.yukle : Tr.iceAktar),
+                icon: _importing ? null : Icons.file_upload,
+                label: _importing ? Tr.yukle : Tr.iceAktar,
               ),
             ],
           ],

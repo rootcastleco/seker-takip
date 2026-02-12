@@ -184,6 +184,31 @@ class Tr {
   static const String nasilKullanilir = 'Nasıl Kullanılır?';
   static const String kullanimKilavuzu = 'Kullanım Kılavuzu';
 
+  // Bottom Navigation
+  static const String tabAnaSayfa = 'Ana Sayfa';
+  static const String tabKayitDefteri = 'Kayıt Defteri';
+  static const String tabAnaliz = 'Analiz';
+  static const String tabAyarlar = 'Ayarlar';
+
+  // Consolidated Settings
+  static const String profilBilgileri = 'Profil Bilgileri';
+  static const String yedeklemeMerkezi = 'Yedekleme Merkezi';
+  static const String raporlama = 'Raporlama';
+  static const String sesliAsistan = 'Sesli Asistan';
+  static const String sesliAsistanAciklama =
+      'Kayıt sonrası sesli geri bildirim';
+
+  // Charts / Analysis
+  static const String analizBaslik = 'Analiz & Grafikler';
+  static const String gunlukTrend = 'Günlük Trend';
+  static const String haftalikOrtalama = 'Haftalık Ortalama';
+  static const String veriYok = 'Henüz yeterli veri yok.';
+  static const String sonOlcumler = 'Son Ölçümler';
+
+  // Voice Scripts
+  static const String sesKarsilama = 'Rootcastle sağlığınızı düşünür.';
+  static const String sesOlcumHatirlatma = 'Hey, şekerini ölçmen lazım.';
+
   // PDF Rapor
   static const String pdfRaporBaslik = 'Kan Şekeri Takip Raporu';
   static const String pdfHastaBilgi = 'Hasta Bilgileri';

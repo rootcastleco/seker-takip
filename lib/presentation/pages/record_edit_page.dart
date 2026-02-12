@@ -10,7 +10,7 @@ import '../../domain/entities/glucose_record.dart';
 import '../../features/dashboard/logic/glucose_analyzer.dart';
 import '../../features/scanner/presentation/scan_page.dart';
 import '../state/providers.dart';
-import '../widgets/rootcastle_app_bar.dart';
+import '../widgets/glass_widgets.dart';
 
 /// Yeni kayıt veya düzenleme sayfası.
 class RecordEditPage extends ConsumerStatefulWidget {
@@ -288,8 +288,8 @@ class _RecordEditPageState extends ConsumerState<RecordEditPage> {
 
     final isEdit = widget.recordId != null;
 
-    return Scaffold(
-      appBar: RootcastleAppBar(
+    return GlassScaffold(
+      appBar: GlassAppBar(
         title: isEdit ? 'Kayıt Düzenle' : Tr.yeniKayitEkle,
         actions: isEdit
             ? [
@@ -302,91 +302,103 @@ class _RecordEditPageState extends ConsumerState<RecordEditPage> {
             : null,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Tarih seçici
-              ListTile(
-                leading: const Icon(Icons.calendar_today),
-                title: Text('${Tr.tarih}: ${formatDate(_selectedDate)}'),
-                trailing: const Icon(Icons.edit_calendar),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: Colors.grey.shade400),
+        padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 50, 16, 24),
+        child: GlassCard(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Tarih seçici
+                GlassCard(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: EdgeInsets.zero,
+                  blur: 6,
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.calendar_today,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? RC.accent
+                          : RC.blue,
+                    ),
+                    title: Text('${Tr.tarih}: ${formatDate(_selectedDate)}'),
+                    trailing: const Icon(Icons.edit_calendar),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onTap: _pickDate,
+                  ),
                 ),
-                onTap: _pickDate,
-              ),
-              const SizedBox(height: 16),
-              // İlaç / İnsülin adı
-              TextFormField(
-                controller: _ilacCtrl,
-                decoration: const InputDecoration(
-                  labelText: Tr.ilacInsulinAdi,
-                  hintText: 'Opsiyonel',
+                // İlaç / İnsülin adı
+                TextFormField(
+                  controller: _ilacCtrl,
+                  decoration: glassInputDecoration(
+                    context: context,
+                    label: Tr.ilacInsulinAdi,
+                    hint: 'Opsiyonel',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Ölçüm alanları
-              _GlucoseField(
-                controller: _sabahAcCtrl,
-                label: Tr.sabahAc,
-                onScan: () => _scanForField(_sabahAcCtrl),
-              ),
-              _GlucoseField(
-                controller: _sabahTokCtrl,
-                label: Tr.sabahTok,
-                onScan: () => _scanForField(_sabahTokCtrl),
-              ),
-              _GlucoseField(
-                controller: _oglenAcCtrl,
-                label: Tr.oglenAc,
-                onScan: () => _scanForField(_oglenAcCtrl),
-              ),
-              _GlucoseField(
-                controller: _oglenTokCtrl,
-                label: Tr.oglenTok,
-                onScan: () => _scanForField(_oglenTokCtrl),
-              ),
-              _GlucoseField(
-                controller: _aksamAcCtrl,
-                label: Tr.aksamAc,
-                onScan: () => _scanForField(_aksamAcCtrl),
-              ),
-              _GlucoseField(
-                controller: _aksamTokCtrl,
-                label: Tr.aksamTok,
-                onScan: () => _scanForField(_aksamTokCtrl),
-              ),
-              _GlucoseField(
-                controller: _yatmadanCtrl,
-                label: Tr.yatmadanOnce,
-                onScan: () => _scanForField(_yatmadanCtrl),
-              ),
-              _GlucoseField(
-                controller: _gece03Ctrl,
-                label: Tr.gece03,
-                onScan: () => _scanForField(_gece03Ctrl),
-              ),
-              const SizedBox(height: 12),
-              // Not
-              TextFormField(
-                controller: _notCtrl,
-                decoration: const InputDecoration(
-                  labelText: Tr.notlar,
-                  hintText: 'Opsiyonel',
+                const SizedBox(height: 16),
+                // Ölçüm alanları
+                _GlucoseField(
+                  controller: _sabahAcCtrl,
+                  label: Tr.sabahAc,
+                  onScan: () => _scanForField(_sabahAcCtrl),
                 ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _save,
-                icon: const Icon(Icons.save),
-                label: Text(isEdit ? Tr.guncelle : Tr.kaydet),
-              ),
-            ],
+                _GlucoseField(
+                  controller: _sabahTokCtrl,
+                  label: Tr.sabahTok,
+                  onScan: () => _scanForField(_sabahTokCtrl),
+                ),
+                _GlucoseField(
+                  controller: _oglenAcCtrl,
+                  label: Tr.oglenAc,
+                  onScan: () => _scanForField(_oglenAcCtrl),
+                ),
+                _GlucoseField(
+                  controller: _oglenTokCtrl,
+                  label: Tr.oglenTok,
+                  onScan: () => _scanForField(_oglenTokCtrl),
+                ),
+                _GlucoseField(
+                  controller: _aksamAcCtrl,
+                  label: Tr.aksamAc,
+                  onScan: () => _scanForField(_aksamAcCtrl),
+                ),
+                _GlucoseField(
+                  controller: _aksamTokCtrl,
+                  label: Tr.aksamTok,
+                  onScan: () => _scanForField(_aksamTokCtrl),
+                ),
+                _GlucoseField(
+                  controller: _yatmadanCtrl,
+                  label: Tr.yatmadanOnce,
+                  onScan: () => _scanForField(_yatmadanCtrl),
+                ),
+                _GlucoseField(
+                  controller: _gece03Ctrl,
+                  label: Tr.gece03,
+                  onScan: () => _scanForField(_gece03Ctrl),
+                ),
+                const SizedBox(height: 12),
+                // Not
+                TextFormField(
+                  controller: _notCtrl,
+                  decoration: glassInputDecoration(
+                    context: context,
+                    label: Tr.notlar,
+                    hint: 'Opsiyonel',
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 24),
+                GlassButton(
+                  onPressed: _save,
+                  icon: Icons.save,
+                  label: isEdit ? Tr.guncelle : Tr.kaydet,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -410,11 +422,18 @@ class _GlucoseField extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: TextFormField(
         controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
+        decoration: glassInputDecoration(
+          context: context,
+          label: label,
           suffixText: Tr.mgDl,
           suffixIcon: IconButton(
-            icon: const Icon(Icons.camera_alt_outlined, size: 20),
+            icon: Icon(
+              Icons.camera_alt_outlined,
+              size: 20,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? RC.accent
+                  : RC.blue,
+            ),
             tooltip: Tr.kamerayiTara,
             onPressed: onScan,
           ),

@@ -12,29 +12,23 @@ class GlucoseAnalyzer {
   static final GlucoseAnalyzer instance = GlucoseAnalyzer._();
 
   // ─── Sesli geri bildirim metinleri ─────────────────────
-  static const String _hipoglisemi =
-      'Kritik seviye tespit edildi. Hipoglisemi riski. '
-      'Sistem karbonhidrat takviyesi öneriyor.';
+  static const String _hipoglisemi = 'Uyarı. Düşük şeker seviyesi.';
 
-  static const String _nominal =
-      'Değerler nominal. Sistem stabil. Kayıt tamamlandı.';
+  static const String _nominal = 'Değer kaydedildi. Seviye stabil.';
 
-  static const String _sinirDeger = 'Sınır değer. Takip protokolü devrede.';
+  static const String _sinirDeger =
+      'Değer kaydedildi. Sınır bölgede. Takip önerilir.';
 
-  static const String _yuksekGlukoz =
-      'Yüksek glukoz uyarısı. İnsülin kontrolü gerekli.';
+  static const String _yuksekGlukoz = 'Dikkat. Yüksek değer tespit edildi.';
 
   static const String _ea1cGuncellendi = '3 aylık ortalama güncellendi.';
 
   static const String _sdYuksek = 'Dikkat. Glikoz dalgalanması yüksek.';
 
   // ─── Bildirim payload sesli yanıtları ─────────────────
-  static const String _aclikHatirlat =
-      'Hatırlatma protokolü: Açlık şekeri ölçüm zamanı.';
+  static const String _aclikHatirlat = 'Hey, şekerini ölçmen lazım.';
 
-  static const String _toklukHatirlat =
-      'Hatırlatma protokolü: Yemekten 2 saat geçti. '
-      'Tokluk verisi bekleniyor.';
+  static const String _toklukHatirlat = 'Hey, şekerini ölçmen lazım.';
 
   /// Kayıt sonrası tüm ölçümleri analiz et ve sesli geri bildirim ver.
   ///

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../app/theme.dart';
 import '../../core/constants.dart';
-import '../widgets/rootcastle_app_bar.dart';
+import '../widgets/glass_widgets.dart';
 
 /// Diyabette İdeal Hedefler sayfası — sabit tablo.
 class TargetsPage extends StatelessWidget {
@@ -20,25 +19,44 @@ class TargetsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const RootcastleAppBar(title: Tr.idealHedefler),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GlassScaffold(
+      appBar: const GlassAppBar(title: Tr.idealHedefler),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 50, 16, 24),
         children: [
           Text(
             Tr.hedeflerBaslik,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: RootcastleColors.blue,
+            style: TextStyle(
+              fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: isDark ? RC.accent : RC.blue,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Card(
+          GlassCard(
             child: DataTable(
-              columns: const [
-                DataColumn(label: Text('Parametre')),
-                DataColumn(label: Text('Hedef Değer')),
+              columns: [
+                DataColumn(
+                  label: Text(
+                    'Parametre',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : RC.blue,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Hedef Değer',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : RC.blue,
+                    ),
+                  ),
+                ),
               ],
               rows: _targets
                   .map(
@@ -48,7 +66,10 @@ class TargetsPage extends StatelessWidget {
                         DataCell(
                           Text(
                             t.$2,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? RC.accentGreen : RC.green,
+                            ),
                           ),
                         ),
                       ],
@@ -58,13 +79,8 @@ class TargetsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.amber.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.shade200),
-            ),
+          GlassCard(
+            borderColor: Colors.amber.withValues(alpha: 0.3),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -73,7 +89,10 @@ class TargetsPage extends StatelessWidget {
                 Expanded(
                   child: Text(
                     Tr.hedeflerDipnot,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
                   ),
                 ),
               ],
