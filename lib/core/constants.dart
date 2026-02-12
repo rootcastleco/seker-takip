@@ -192,6 +192,7 @@ class Tr {
   static const String tabAnaSayfa = 'Ana Sayfa';
   static const String tabKayitDefteri = 'Kayıt Defteri';
   static const String tabAnaliz = 'Analiz';
+  static const String tabSofia = 'Sofia';
   static const String tabAyarlar = 'Ayarlar';
 
   // Consolidated Settings

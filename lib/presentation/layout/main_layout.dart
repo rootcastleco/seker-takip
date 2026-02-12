@@ -5,7 +5,7 @@ import '../../core/constants.dart';
 import '../../app/routes.dart';
 import '../pages/dashboard_page.dart';
 import '../pages/records_table_page.dart';
-import '../pages/charts_page.dart';
+import '../pages/sofia_ai_page.dart';
 import '../pages/settings_page.dart';
 import '../widgets/glass_widgets.dart';
 
@@ -26,7 +26,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   static const List<Widget> _pages = [
     DashboardPage(),
     RecordsTablePage(),
-    ChartsPage(),
+    SofiaAiPage(),
     SettingsPage(),
   ];
 
@@ -138,7 +138,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               _navItem(0, Icons.home_rounded, Tr.tabAnaSayfa, isDark),
               _navItem(1, Icons.list_alt_rounded, Tr.tabKayitDefteri, isDark),
               const SizedBox(width: 56), // Space for FAB
-              _navItem(2, Icons.bar_chart_rounded, Tr.tabAnaliz, isDark),
+              _navItem(2, Icons.auto_awesome, Tr.tabSofia, isDark),
               _navItem(3, Icons.settings_rounded, Tr.tabAyarlar, isDark),
             ],
           ),

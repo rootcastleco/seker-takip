@@ -200,10 +200,19 @@ Eğer sana JSON verisi veya veritabanı çıktısı verilirse, bunu insan diline
       }
     } catch (e, stack) {
       AppLogger.instance.error('Sofia AI istisna', error: e, stack: stack);
-      if (e.toString().contains('TimeoutException')) {
+      final errorType = e.runtimeType.toString();
+      final errorMsg = e.toString();
+      if (errorMsg.contains('TimeoutException')) {
         return 'Sofia yanıt vermedi, bağlantı zaman aşımına uğradı. İnternetini kontrol et.';
       }
-      return 'Sofia şu an ulaşılamıyor. İnternet bağlantını kontrol et.';
+      if (errorMsg.contains('SocketException') ||
+          errorMsg.contains('HandshakeException') ||
+          errorMsg.contains('OS Error')) {
+        return 'İnternet bağlantısı kurulamıyor. WiFi veya mobil verinizi kontrol edin. '
+            '(Hata: $errorType)';
+      }
+      return 'Sofia bir hata ile karşılaştı: $errorType. '
+          'Lütfen tekrar deneyin. Detay: ${errorMsg.length > 100 ? errorMsg.substring(0, 100) : errorMsg}';
     }
   }
 
