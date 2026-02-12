@@ -60,6 +60,17 @@ class SofiaAiService {
       final prefs = await SharedPreferences.getInstance();
       _apiKey = prefs.getString(_prefApiKey) ?? defaultApiKey;
       _model = prefs.getString(_prefModel) ?? defaultModel;
+
+      // Kayıtlı model artık listede yoksa varsayılana dön
+      final modelExists = availableModels.any((m) => m.id == _model);
+      if (!modelExists) {
+        AppLogger.instance.info(
+          'Kayıtlı model ($_model) artık mevcut değil, varsayılana dönülüyor.',
+        );
+        _model = defaultModel;
+        await prefs.setString(_prefModel, _model);
+      }
+
       AppLogger.instance.info('Sofia AI ayarları yüklendi. Model: $_model');
     } catch (e) {
       AppLogger.instance.error('Sofia AI ayar yükleme hatası: $e');
