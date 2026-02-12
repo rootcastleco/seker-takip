@@ -20,26 +20,34 @@ class SofiaAiService {
       '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';
   static const String _baseUrl =
       'https://openrouter.ai/api/v1/chat/completions';
-  static const String defaultModel =
-      'google/gemini-2.0-flash-lite-preview-02-05:free';
+  static const String defaultModel = 'google/gemma-3-4b-it:free';
 
-  /// Kullanılabilir ücretsiz modeller.
+  /// Kullanılabilir ücretsiz modeller (Şubat 2026 doğrulanmış).
   static const List<SofiaModel> availableModels = [
-    SofiaModel(
-      id: 'google/gemini-2.0-flash-lite-preview-02-05:free',
-      name: 'Gemini 2.0 Flash Lite (Ücretsiz)',
-    ),
     SofiaModel(
       id: 'google/gemma-3-4b-it:free',
       name: 'Google Gemma 3 4B (Ücretsiz)',
     ),
     SofiaModel(
-      id: 'meta-llama/llama-4-scout:free',
-      name: 'Llama 4 Scout (Ücretsiz)',
+      id: 'google/gemma-3-27b-it:free',
+      name: 'Google Gemma 3 27B (Ücretsiz)',
     ),
-    SofiaModel(id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Ücretsiz)'),
-    SofiaModel(id: 'qwen/qwen3-8b:free', name: 'Qwen 3 8B (Ücretsiz)'),
-    SofiaModel(id: 'microsoft/phi-4:free', name: 'Microsoft Phi 4 (Ücretsiz)'),
+    SofiaModel(
+      id: 'stepfun/step-3.5-flash:free',
+      name: 'StepFun Step 3.5 Flash (Ücretsiz)',
+    ),
+    SofiaModel(
+      id: 'nvidia/nemotron-3-nano-30b-a3b:free',
+      name: 'NVIDIA Nemotron 3 Nano 30B (Ücretsiz)',
+    ),
+    SofiaModel(
+      id: 'arcee-ai/trinity-mini:free',
+      name: 'Arcee Trinity Mini (Ücretsiz)',
+    ),
+    SofiaModel(
+      id: 'arcee-ai/trinity-large-preview:free',
+      name: 'Arcee Trinity Large (Ücretsiz)',
+    ),
   ];
 
   // ─── Çalışma Zamanı Ayarları ────────────────────────────
