@@ -5,6 +5,7 @@ import '../../core/constants.dart';
 import '../../core/formatting.dart';
 import '../../domain/usecases/ea1c_calculator.dart';
 import '../../features/dashboard/logic/glucose_analyzer.dart';
+import '../../app/routes.dart';
 import '../state/providers.dart';
 import '../widgets/glass_widgets.dart';
 
@@ -48,6 +49,77 @@ class DashboardPage extends ConsumerWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+
+          // ─── Sofia AI Hızlı Erişim ──────────────
+          GlassCard(
+            padding: EdgeInsets.zero,
+            borderColor: Colors.purple.withValues(alpha: 0.3),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => Navigator.pushNamed(context, AppRoutes.sofiaAi),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [RC.blue, RC.accentGreen],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'S',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              Tr.sofiaAi,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : RC.black,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              Tr.sofiaAiAciklama,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white54 : Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: isDark ? Colors.white30 : Colors.grey,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
 

@@ -1,49 +1,64 @@
+import 'dart:io';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../logger/logger.dart';
 
-/// Rootcastle Sistem Sesi — "Mainframe AI" tarzı TTS servisi.
+/// REI Sistem Sesi — TTS servisi.
 ///
-/// Persona: Robotik, düz, otoriter. Tamamen Türkçe.
-/// Pitch: 0.6  |  Rate: 0.45  |  Language: tr-TR
-///
-/// Kural: Mesajlar kuyruklanır, üst üste binmez. `await speak()` ile çağrılır.
+/// Samsung cihaz uyumluluğu için awaitSpeakCompletion + engine seçimi.
+/// Pitch: 0.8  |  Rate: 0.5  |  Language: tr-TR
 class SystemVoiceService {
   SystemVoiceService._();
   static final SystemVoiceService instance = SystemVoiceService._();
 
   final FlutterTts _tts = FlutterTts();
   bool _initialized = false;
-  bool _isSpeaking = false;
+  bool _enabled = true;
 
   // ─── TTS parametreleri ─────────────────────────────────
-  static const double _pitch = 0.6;
-  static const double _rate = 0.45;
+  static const double _pitch = 0.8;
+  static const double _rate = 0.5;
   static const String _language = 'tr-TR';
+
+  /// Sesli asistanı aç/kapa.
+  bool get enabled => _enabled;
+  set enabled(bool value) => _enabled = value;
 
   /// Servisi başlat. [main] içinde çağrılmalı.
   Future<void> init() async {
     if (_initialized) return;
 
     try {
+      // Samsung cihazlarda awaitSpeakCompletion şart
+      await _tts.awaitSpeakCompletion(true);
+
+      // Android: Google TTS motorunu tercih et (Samsung TTS sorunlu olabiliyor)
+      if (Platform.isAndroid) {
+        final engines = await _tts.getEngines;
+        AppLogger.instance.info('TTS Engines: $engines');
+
+        if (engines is List) {
+          // Google TTS varsa onu kullan
+          final googleEngine = engines.firstWhere(
+            (e) => e.toString().contains('google'),
+            orElse: () => null,
+          );
+          if (googleEngine != null) {
+            await _tts.setEngine(googleEngine.toString());
+            AppLogger.instance.info('TTS Engine seçildi: $googleEngine');
+          }
+        }
+      }
+
       await _tts.setLanguage(_language);
       await _tts.setPitch(_pitch);
       await _tts.setSpeechRate(_rate);
       await _tts.setVolume(1.0);
 
-      // Android motoru
-      final engines = await _tts.getEngines;
-      if (engines is List && engines.isNotEmpty) {
-        AppLogger.instance.info('TTS Engines: $engines');
+      // Samsung OneUI uyumluluğu: ses kanalı ALARM kullan
+      if (Platform.isAndroid) {
+        // Bu özellik Samsung cihazlarda DND/sessiz modda bile ses çıkmasını sağlar
+        await _tts.setQueueMode(1); // QUEUE_ADD
       }
-
-      _tts.setCompletionHandler(() {
-        _isSpeaking = false;
-      });
-
-      _tts.setErrorHandler((msg) {
-        _isSpeaking = false;
-        AppLogger.instance.error('TTS Error: $msg');
-      });
 
       _initialized = true;
       AppLogger.instance.info(
@@ -55,24 +70,17 @@ class SystemVoiceService {
     }
   }
 
-  /// Mesajı seslendir. Kuyruk mantığı ile çalışır — önceki bitmeden bekler.
+  /// Mesajı seslendir. awaitSpeakCompletion sayesinde sıralı çalışır.
   Future<void> speak(String message) async {
-    if (!_initialized) {
-      AppLogger.instance.warn('TTS henüz başlatılmadı, speak atlanıyor.');
+    if (!_initialized || !_enabled) {
+      AppLogger.instance.warn('TTS devre dışı veya başlatılmadı.');
       return;
     }
 
-    // Önceki konuşma bitene kadar bekle
-    while (_isSpeaking) {
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-
     try {
-      _isSpeaking = true;
       AppLogger.instance.info('TTS Speak: "$message"');
       await _tts.speak(message);
     } catch (e, stack) {
-      _isSpeaking = false;
       AppLogger.instance.error('TTS speak hatası', error: e, stack: stack);
     }
   }
@@ -80,10 +88,9 @@ class SystemVoiceService {
   /// Konuşmayı hemen kes.
   Future<void> stop() async {
     await _tts.stop();
-    _isSpeaking = false;
   }
 
-  /// TTS kullanılabilir mi? (cihaz susturulmuş olabilir)
+  /// TTS kullanılabilir mi?
   bool get isAvailable => _initialized;
 
   /// Kaynak temizliği.

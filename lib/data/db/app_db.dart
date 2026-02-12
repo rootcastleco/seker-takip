@@ -8,7 +8,7 @@ import 'tables.dart';
 
 part 'app_db.g.dart';
 
-@DriftDatabase(tables: [Profiles, GlucoseRecords])
+@DriftDatabase(tables: [Profiles, GlucoseRecords, Medications])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -24,11 +24,9 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      // Gelecek migration adımları burada tanımlanacak.
-      // Örnek:
-      // if (from < 2) {
-      //   await m.addColumn(glucoseRecords, glucoseRecords.yeniAlan);
-      // }
+      if (from < 2) {
+        await m.createTable(medications);
+      }
     },
   );
 }

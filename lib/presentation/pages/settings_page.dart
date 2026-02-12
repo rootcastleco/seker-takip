@@ -109,6 +109,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             activeColor: RC.accentGreen,
             onChanged: (val) {
               setState(() => _voiceEnabled = val);
+              SystemVoiceService.instance.enabled = val;
               if (!val) {
                 SystemVoiceService.instance.stop();
               }
@@ -120,6 +121,23 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           label: Tr.idealHedefler,
           color: RC.accentGreen,
           onTap: () => Navigator.pushNamed(context, AppRoutes.targets),
+        ),
+        GlassListTile(
+          icon: Icons.medication,
+          label: Tr.ilacListesi,
+          color: RC.accent,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.medications),
+        ),
+
+        const SizedBox(height: 8),
+
+        // ─── Sofia AI ──────────────────────────────
+        GlassSectionHeader(title: 'Yapay Zeka', icon: Icons.auto_awesome),
+        GlassListTile(
+          icon: Icons.smart_toy,
+          label: Tr.sofiaAi,
+          color: Colors.purple,
+          onTap: () => Navigator.pushNamed(context, AppRoutes.sofiaAi),
         ),
 
         const SizedBox(height: 8),

@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../constants.dart';
 import '../logger/logger.dart';
+import 'voice_service.dart';
 
 /// Bildirim servisi — Tokluk/Açlık hatırlatıcısı + payload desteği.
 ///
@@ -145,5 +146,92 @@ class NotificationService {
   /// Bekleyen bildirimleri iptal et.
   Future<void> cancelAll() async {
     await _plugin.cancelAll();
+  }
+
+  // ─── İlaç Hatırlatıcısı ──────────────────────────────────
+
+  /// Günlük tekrarlayan ilaç hatırlatıcısı kur.
+  Future<void> scheduleIlacReminder({
+    required int id,
+    required String ilacAdi,
+    required int hour,
+    required int minute,
+  }) async {
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        kNotifIlacChannelId,
+        kNotifIlacChannelName,
+        channelDescription: 'İlaç hatırlatma bildirimleri',
+        importance: Importance.high,
+        priority: Priority.high,
+        ticker: 'İlaç zamanı',
+      );
+      const darwinDetails = DarwinNotificationDetails();
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: darwinDetails,
+        macOS: darwinDetails,
+      );
+
+      // Benzersiz bildirim ID'si oluştur (ilaç ID + offset)
+      final notifId = kNotifIlacId + id;
+
+      // Günlük tekrar için: bir sonraki çalma zamanını hesapla
+      final now = DateTime.now();
+      var scheduledDate = DateTime(now.year, now.month, now.day, hour, minute);
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      final delay = scheduledDate.difference(now);
+
+      // İlk bildirimi zamanlayıcıyla kur, sonra günlük tekrarla
+      _scheduleRepeatingIlac(
+        notifId: notifId,
+        ilacAdi: ilacAdi,
+        details: details,
+        initialDelay: delay,
+        hour: hour,
+        minute: minute,
+      );
+
+      AppLogger.instance.info(
+        'İlaç hatırlatıcısı kuruldu: $ilacAdi → $hour:${minute.toString().padLeft(2, '0')} '
+        '(ilk: ${delay.inMinutes} dk sonra). NotifID: $notifId',
+      );
+    } catch (e, stack) {
+      AppLogger.instance.error('İlaç bildirim hatası', error: e, stack: stack);
+    }
+  }
+
+  void _scheduleRepeatingIlac({
+    required int notifId,
+    required String ilacAdi,
+    required NotificationDetails details,
+    required Duration initialDelay,
+    required int hour,
+    required int minute,
+  }) {
+    Future.delayed(initialDelay, () async {
+      await _plugin.show(
+        notifId,
+        '$kAppName — ${Tr.ilacHatirlatici}',
+        '💊 $ilacAdi — ${Tr.sesIlacHatirlatma}',
+        details,
+        payload: kPayloadIlacReminder,
+      );
+
+      // Sesli hatırlatma
+      SystemVoiceService.instance.speak('$ilacAdi. ${Tr.sesIlacHatirlatma}');
+    });
+  }
+
+  /// İlaç hatırlatıcısını iptal et.
+  Future<void> cancelIlacReminder(int medicationId) async {
+    final notifId = kNotifIlacId + medicationId;
+    await _plugin.cancel(notifId);
+    AppLogger.instance.info(
+      'İlaç hatırlatıcısı iptal edildi. NotifID: $notifId',
+    );
   }
 }

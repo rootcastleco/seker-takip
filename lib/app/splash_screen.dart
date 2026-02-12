@@ -97,7 +97,7 @@ class _SplashScreenState extends State<SplashScreen>
               const SizedBox(height: 24),
               // App name
               const Text(
-                'Rootcastle',
+                'REI',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 6),
               Text(
-                'Kan Şekeri Takip',
+                'Şeker Takip',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,

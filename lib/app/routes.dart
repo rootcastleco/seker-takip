@@ -6,6 +6,8 @@ import '../presentation/pages/import_page.dart';
 import '../presentation/pages/targets_page.dart';
 import '../presentation/pages/diagnostics_page.dart';
 import '../presentation/pages/about_page.dart';
+import '../presentation/pages/medications_page.dart';
+import '../presentation/pages/sofia_ai_page.dart';
 
 /// Uygulama route tanımlamaları.
 ///
@@ -21,6 +23,8 @@ class AppRoutes {
   static const String targets = '/targets';
   static const String diagnostics = '/diagnostics';
   static const String about = '/about';
+  static const String medications = '/medications';
+  static const String sofiaAi = '/sofia-ai';
 
   static Map<String, WidgetBuilder> get routes => {
     profile: (_) => const ProfilePage(),
@@ -29,6 +33,8 @@ class AppRoutes {
     targets: (_) => const TargetsPage(),
     diagnostics: (_) => const DiagnosticsPage(),
     about: (_) => const AboutPage(),
+    medications: (_) => const _MedicationsPageWrapper(),
+    sofiaAi: (_) => const SofiaAiPage(),
   };
 
   /// RecordEditPage argüman ile çalıştığından onGenerateRoute kullanılır.
@@ -40,5 +46,18 @@ class AppRoutes {
       );
     }
     return null;
+  }
+}
+
+/// İlaçlar sayfası wrapper — Scaffold ile tam sayfa.
+class _MedicationsPageWrapper extends StatelessWidget {
+  const _MedicationsPageWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('İlaçlarım')),
+      body: const MedicationsPage(),
+    );
   }
 }

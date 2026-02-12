@@ -1,5 +1,5 @@
 name: seker_takip
-description: Rootcastle Kan Şekeri Takip - Offline-first kan şekeri takip uygulaması.
+description: REI Şeker Takip - Offline-first kan şekeri takip uygulaması.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -25,6 +25,8 @@ dependencies:
   camera: ^0.11.1
   google_mlkit_text_recognition: ^0.14.0
   permission_handler: ^11.3.1
+  google_fonts: ^8.0.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -40,6 +42,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/logo.png
+    - assets/fonts/NotoSans-Regular.ttf
+    - assets/fonts/NotoSans-Bold.ttf
   #         style: italic
   #   - family: Trajan Pro
   #     fonts:

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -8,12 +9,31 @@ import '../../domain/entities/profile.dart';
 import '../../domain/entities/glucose_record.dart';
 import '../../domain/usecases/ea1c_calculator.dart';
 
-/// Profesyonel PDF rapor oluşturucu.
+/// Profesyonel PDF rapor oluşturucu — Türkçe karakter destekli.
 class PdfReportGenerator {
   PdfReportGenerator._();
 
   static const _rootcastleBlue = PdfColor.fromInt(0xFF0E3D8A);
   static const _red = PdfColor.fromInt(0xFFD32F2F);
+
+  /// Türkçe karakter destekleyen font yükle (asset'ten).
+  static Future<pw.Font> _loadTurkishFont() async {
+    try {
+      final data = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
+      return pw.Font.ttf(data);
+    } catch (_) {
+      return pw.Font.helvetica();
+    }
+  }
+
+  static Future<pw.Font> _loadTurkishFontBold() async {
+    try {
+      final data = await rootBundle.load('assets/fonts/NotoSans-Bold.ttf');
+      return pw.Font.ttf(data);
+    } catch (_) {
+      return pw.Font.helveticaBold();
+    }
+  }
 
   /// PDF dosyası oluştur.
   static Future<void> writeToFile({
@@ -21,10 +41,15 @@ class PdfReportGenerator {
     required List<GlucoseRecordEntity> records,
     required String filePath,
   }) async {
+    // Türkçe karakter destekli fontlar yükle
+    final trFont = await _loadTurkishFont();
+    final trFontBold = await _loadTurkishFontBold();
+
     final pdf = pw.Document(
       author: Tr.gelistiriciAdi,
       title: Tr.pdfRaporBaslik,
       creator: kAppName,
+      theme: pw.ThemeData.withFont(base: trFont, bold: trFontBold),
     );
 
     final ea1cResult = Ea1cCalculator.calculate(records);
@@ -74,7 +99,7 @@ class PdfReportGenerator {
             pw.SizedBox(height: 8),
             pw.Text(
               Tr.pdfHedefDisiBilgi,
-              style: const pw.TextStyle(fontSize: 8, color: _red),
+              style: pw.TextStyle(fontSize: 8, color: _red),
             ),
           ],
         ],
@@ -109,10 +134,7 @@ class PdfReportGenerator {
               ),
               pw.Text(
                 'Dev: ${Tr.gelistiriciAdi}',
-                style: const pw.TextStyle(
-                  fontSize: 10,
-                  color: PdfColors.grey700,
-                ),
+                style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
               ),
             ],
           ),
@@ -121,17 +143,11 @@ class PdfReportGenerator {
             children: [
               pw.Text(
                 '${Tr.pdfOlusturmaTarihi}: ${formatDate(DateTime.now())}',
-                style: const pw.TextStyle(
-                  fontSize: 9,
-                  color: PdfColors.grey600,
-                ),
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
               ),
               pw.Text(
                 'v$kAppVersion',
-                style: const pw.TextStyle(
-                  fontSize: 8,
-                  color: PdfColors.grey500,
-                ),
+                style: pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
               ),
             ],
           ),
@@ -151,11 +167,11 @@ class PdfReportGenerator {
         children: [
           pw.Text(
             Tr.pdfFooterGen,
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
+            style: pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
           ),
           pw.Text(
             'Sayfa ${context.pageNumber} / ${context.pagesCount}',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
+            style: pw.TextStyle(fontSize: 8, color: PdfColors.grey500),
           ),
         ],
       ),
@@ -211,7 +227,7 @@ class PdfReportGenerator {
               style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ),
-          pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
+          pw.Text(value, style: pw.TextStyle(fontSize: 10)),
         ],
       ),
     );
@@ -290,7 +306,7 @@ class PdfReportGenerator {
         color: PdfColors.white,
       ),
       headerDecoration: const pw.BoxDecoration(color: _rootcastleBlue),
-      cellStyle: const pw.TextStyle(fontSize: 8),
+      cellStyle: pw.TextStyle(fontSize: 8),
       cellHeight: 22,
       columnWidths: {0: const pw.FixedColumnWidth(60)},
       headers: headers,

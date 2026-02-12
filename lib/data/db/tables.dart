@@ -36,3 +36,19 @@ class GlucoseRecords extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 }
+
+/// İlaç tablosu — kullanıcı ilaçlarını ve hatırlatma saatlerini tutar.
+class Medications extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get ilacAdi => text()();
+  TextColumn get doz => text().withDefault(const Constant(''))();
+
+  /// Hatırlatma saati — "HH:mm" formatında saklanır (ör: "08:30").
+  TextColumn get hatirlatmaSaati => text().withDefault(const Constant(''))();
+
+  /// İlaç hatırlatıcısı aktif mi?
+  BoolColumn get aktif => boolean().withDefault(const Constant(true))();
+  TextColumn get notlar => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}
