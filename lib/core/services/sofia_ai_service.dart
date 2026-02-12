@@ -155,7 +155,7 @@ Eğer sana JSON verisi veya veritabanı çıktısı verilirse, bunu insan diline
               'Authorization': 'Bearer $_apiKey',
               'Content-Type': 'application/json',
               'HTTP-Referer': 'https://rei-seker-takip.app',
-              'X-Title': 'REI Şeker Takip - Sofia AI',
+              'X-Title': 'REI Seker Takip - Sofia AI',
             },
             body: jsonEncode({
               'model': _model,
