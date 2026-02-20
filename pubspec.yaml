@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   drift: ^2.22.1
   sqlite3_flutter_libs: ^0.5.30
   path_provider: ^2.1.5
@@ -17,13 +19,14 @@ dependencies:
   share_plus: ^10.1.4
   excel: ^4.0.6
   crypto: ^3.0.6
-  intl: ^0.20.2
+  intl: any
   file_picker: ^8.3.7
   flutter_local_notifications: ^18.0.1
   pdf: any
   flutter_tts: any
   camera: any
   google_mlkit_text_recognition: any
+  google_mlkit_image_labeling: any
   permission_handler: any
   timezone: any
   fl_chart: ^0.68.0

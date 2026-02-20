@@ -9,6 +9,7 @@ import '../presentation/pages/diagnostics_page.dart';
 import '../presentation/pages/about_page.dart';
 import '../presentation/pages/medications_page.dart';
 import '../presentation/pages/sofia_ai_page.dart';
+import '../features/food_scanner/food_scanner_page.dart';
 
 /// Uygulama route tanımlamaları.
 ///
@@ -27,6 +28,7 @@ class AppRoutes {
   static const String about = '/about';
   static const String medications = '/medications';
   static const String sofiaAi = '/sofia-ai';
+  static const String foodScanner = '/food-scanner';
 
   static Map<String, WidgetBuilder> get routes => {
     profile: (_) => const ProfilePage(),
@@ -38,6 +40,7 @@ class AppRoutes {
     medications: (_) => const _MedicationsPageWrapper(),
     records: (_) => const _RecordsPageWrapper(),
     sofiaAi: (_) => const SofiaAiPage(),
+    foodScanner: (_) => const FoodScannerPage(),
   };
 
   /// RecordEditPage argüman ile çalıştığından onGenerateRoute kullanılır.

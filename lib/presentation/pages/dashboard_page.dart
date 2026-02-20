@@ -9,6 +9,7 @@ import '../../app/routes.dart';
 import '../state/providers.dart';
 import '../widgets/glass_widgets.dart';
 import '../widgets/glucose_chart.dart';
+import '../widgets/glycemic_predictor_card.dart';
 
 /// Ana sayfa — Dashboard (Tab 1).
 ///
@@ -122,6 +123,12 @@ class DashboardPage extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
+
+          // ─── Besin Etkisi Tahmini ───────────────────
+          GlycemicPredictorCard(
+            onOpenScanner: () =>
+                Navigator.pushNamed(context, AppRoutes.foodScanner),
           ),
 
           // ─── Bugünün Özeti ────────────────────────

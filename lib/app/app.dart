@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants.dart';
 import '../core/services/voice_service.dart';
@@ -32,6 +33,16 @@ class _SekerTakipAppState extends ConsumerState<SekerTakipApp> {
       theme: RootcastleTheme.light,
       darkTheme: RootcastleTheme.dark,
       themeMode: ThemeMode.dark,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('tr', 'TR'),
+        Locale('en', 'US'),
+      ],
+      locale: const Locale('tr', 'TR'),
       builder: (context, child) {
         if (_showSplash) {
           return SplashScreen(onDone: _onSplashDone);

@@ -133,6 +133,17 @@ Sen Sofia. Farmakolojik etkilesim kontrolu yapiyorsun.
 5. Asla ilac onerme veya degistirme.
 ''';
 
+  static const String _arFoodPrompt = '''
+Sen Sofia AI. Kullanici su an AR kamerasyla bir besine bakiyor.
+Gorevin, kameranin tespit ettigi besinin diyabet uzerindeki etkisini hizli ve vurucu bir sekilde sesli olarak bildirmektir.
+Kurallar:
+1. Tahmini kalori ve seker miktarini soyle.
+2. Glisemik indeksi yuksekse net bir dille uyar.
+3. Uzun paragraflar kurma, aksiyon odakli ol. Ornek: "Bunun yerine sunu tercih edebilirsin".
+4. Markdown veya sembol kullanma.
+5. 3-5 cumle ile sinirli tut.
+''';
+
   // ─── Konuşma Geçmişi ───────────────────────────────────
   final List<Map<String, dynamic>> _history = [];
   static const int _maxHistory = 20;
@@ -391,6 +402,41 @@ Sen Sofia. Farmakolojik etkilesim kontrolu yapiyorsun.
 
   Future<String> askDrugInfo(String drugName) async {
     return ask('$drugName ilaci hakkinda bilgi ver. Diyabete etkisini belirt.');
+  }
+
+  // ─── AR Kamera Besin Analizi ──────────────────────────────
+
+  Future<String> analyzeDetectedFood({
+    required String foodName,
+    required int calories,
+    required int carbsG,
+    required int glycemicIndex,
+    int? lastGlucose,
+  }) async {
+    final prompt = StringBuffer();
+    prompt.write('Kamera Tespiti: 1 Porsiyon $foodName. ');
+    prompt.write('Kalori: $calories kcal, Karbonhidrat: ${carbsG}g, ');
+    prompt.write('Glisemik Indeks: $glycemicIndex. ');
+    if (lastGlucose != null) {
+      prompt.write('Kullanicinin Son Seker Olcumu: $lastGlucose mg/dL. ');
+    }
+    prompt.write(
+      'Kullaniciya bu yemegi yiyip yememesi gerektigini kisa bir sesli brifing seklinde sun.',
+    );
+
+    return _callGemini(
+      systemPrompt: _arFoodPrompt,
+      contents: [
+        {
+          'role': 'user',
+          'parts': [
+            {'text': prompt.toString()},
+          ],
+        },
+      ],
+      temperature: 0.5,
+      maxTokens: 300,
+    );
   }
 
   Future<String> askNutritionAdvice(String question) async {
