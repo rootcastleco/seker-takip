@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../constants.dart';
 import '../logger/logger.dart';
 import 'voice_service.dart';
@@ -64,16 +65,22 @@ class NotificationService {
 
   /// Android bildirim izni iste.
   Future<bool> requestPermission() async {
+    bool granted = true;
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android != null) {
-      final granted = await android.requestNotificationsPermission();
-      return granted ?? false;
+      final notifGranted = await android.requestNotificationsPermission();
+      granted = notifGranted ?? false;
+      
+      // Android 12+ Exact Alarms
+      if (await Permission.scheduleExactAlarm.isDenied) {
+        await Permission.scheduleExactAlarm.request();
+      }
     }
     // iOS izinleri init sırasında istenir
-    return true;
+    return granted;
   }
 
   /// [kToklukRemindMinutes] dakika sonra tokluk hatırlatıcısı kur.

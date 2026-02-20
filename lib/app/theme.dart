@@ -26,7 +26,7 @@ class RootcastleTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: Colors.transparent,
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.white.withValues(alpha: 0.5),
+        backgroundColor: Colors.white.withOpacity(0.5),
         foregroundColor: RC.blue,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -58,7 +58,7 @@ class RootcastleTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: RC.blue,
-          side: BorderSide(color: RC.blue.withValues(alpha: 0.3)),
+          side: BorderSide(color: RC.blue.withOpacity(0.3)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -67,7 +67,7 @@ class RootcastleTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.7),
+        fillColor: Colors.white.withOpacity(0.7),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -85,9 +85,9 @@ class RootcastleTheme {
           vertical: 12,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 0,
-        color: Colors.white.withValues(alpha: 0.65),
+        color: Colors.white.withOpacity(0.65),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       dividerTheme: DividerThemeData(
@@ -98,7 +98,7 @@ class RootcastleTheme {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
@@ -114,16 +114,16 @@ class RootcastleTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
-        indicatorColor: RC.blue.withValues(alpha: 0.15),
+        indicatorColor: RC.blue.withOpacity(0.15),
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w500,
-            color: RC.blue.withValues(alpha: 0.7),
+            color: RC.blue.withOpacity(0.7),
           ),
         ),
         iconTheme: WidgetStatePropertyAll(
-          IconThemeData(color: RC.blue.withValues(alpha: 0.7), size: 24),
+          IconThemeData(color: RC.blue.withOpacity(0.7), size: 24),
         ),
       ),
     );
@@ -142,7 +142,7 @@ class RootcastleTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: Colors.transparent,
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.black.withValues(alpha: 0.4),
+        backgroundColor: Colors.black.withOpacity(0.4),
         foregroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -174,7 +174,7 @@ class RootcastleTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: RC.accent,
-          side: BorderSide(color: RC.accent.withValues(alpha: 0.3)),
+          side: BorderSide(color: RC.accent.withOpacity(0.3)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -183,7 +183,7 @@ class RootcastleTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.06),
+        fillColor: Colors.white.withOpacity(0.06),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: RC.glassBorder),
@@ -202,20 +202,20 @@ class RootcastleTheme {
           vertical: 12,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 0,
-        color: Colors.white.withValues(alpha: 0.08),
+        color: Colors.white.withOpacity(0.08),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       dividerTheme: DividerThemeData(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.white.withOpacity(0.1),
         thickness: 0.5,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: RC.bgDark2,
       ),
@@ -233,16 +233,16 @@ class RootcastleTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: RC.black,
-        indicatorColor: RC.blue.withValues(alpha: 0.3),
+        indicatorColor: RC.blue.withOpacity(0.3),
         labelTextStyle: WidgetStatePropertyAll(
           TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.6),
+            color: Colors.white.withOpacity(0.6),
           ),
         ),
         iconTheme: WidgetStatePropertyAll(
-          IconThemeData(color: Colors.white.withValues(alpha: 0.6), size: 24),
+          IconThemeData(color: Colors.white.withOpacity(0.6), size: 24),
         ),
       ),
     );

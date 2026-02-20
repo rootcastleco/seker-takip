@@ -640,10 +640,10 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
               borderRadius: 16,
               blur: 8,
               borderColor: isUser
-                  ? RC.blue.withValues(alpha: 0.3)
-                  : RC.accentGreen.withValues(alpha: 0.2),
+                  ? RC.blue.withOpacity(0.3)
+                  : RC.accentGreen.withOpacity(0.2),
               backgroundColor: isUser
-                  ? RC.blue.withValues(alpha: isDark ? 0.25 : 0.1)
+                  ? RC.blue.withOpacity(isDark ? 0.25 : 0.1)
                   : null,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,8 +719,7 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
                   gradient: LinearGradient(
                     colors: [
                       RC.blue,
-                      RC.accentGreen.withValues(
-                        alpha: 0.5 + _pulseController.value * 0.5,
+                      RC.accentGreen.withOpacity(0.5 + _pulseController.value * 0.5,
                       ),
                     ],
                     begin: Alignment.topLeft,
@@ -860,8 +859,8 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: color.withValues(alpha: isDark ? 0.15 : 0.1),
-            border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+            color: color.withOpacity(isDark ? 0.15 : 0.1),
+            border: Border.all(color: color.withOpacity(0.3), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -888,13 +887,13 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.black.withValues(alpha: 0.3)
-            : Colors.white.withValues(alpha: 0.5),
+            ? Colors.black.withOpacity(0.3)
+            : Colors.white.withOpacity(0.5),
         border: Border(
           top: BorderSide(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.black.withValues(alpha: 0.06),
+                ? Colors.white.withOpacity(0.06)
+                : Colors.black.withOpacity(0.06),
           ),
         ),
       ),
@@ -906,9 +905,9 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.red.withValues(alpha: 0.15),
+              color: Colors.red.withOpacity(0.15),
               border: Border.all(
-                color: Colors.red.withValues(alpha: 0.4),
+                color: Colors.red.withOpacity(0.4),
                 width: 1.5,
               ),
             ),
@@ -926,8 +925,8 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.grey.withValues(alpha: 0.1),
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.grey.withOpacity(0.1),
                 border: _isListening
                     ? Border.all(color: Colors.red, width: 1.5)
                     : null,
@@ -965,8 +964,8 @@ class _SofiaAiPageState extends ConsumerState<SofiaAiPage>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: _isListening
-                  ? Colors.red.withValues(alpha: 0.2)
-                  : Colors.purple.withValues(alpha: 0.15),
+                  ? Colors.red.withOpacity(0.2)
+                  : Colors.purple.withOpacity(0.15),
             ),
             child: IconButton(
               icon: Icon(

@@ -376,7 +376,7 @@ class _ChartPainter extends CustomPainter {
 
     // Grid lines
     final gridPaint = Paint()
-      ..color = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08)
+      ..color = (isDark ? Colors.white : Colors.black).withOpacity(0.08)
       ..strokeWidth = 0.5;
 
     for (var i = 0; i <= 4; i++) {
@@ -390,8 +390,7 @@ class _ChartPainter extends CustomPainter {
           text: val.toStringAsFixed(0),
           style: TextStyle(
             fontSize: 9,
-            color: (isDark ? Colors.white : Colors.black).withValues(
-              alpha: 0.5,
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.5,
             ),
           ),
         ),
@@ -401,7 +400,7 @@ class _ChartPainter extends CustomPainter {
     }
 
     // Target zone (70–140)
-    final targetPaint = Paint()..color = RC.accentGreen.withValues(alpha: 0.08);
+    final targetPaint = Paint()..color = RC.accentGreen.withOpacity(0.08);
     final targetTop =
         chartTop + chartHeight * (1 - (140 - minVal) / range).clamp(0.0, 1.0);
     final targetBottom =
@@ -457,8 +456,7 @@ class _ChartPainter extends CustomPainter {
             text: '${d.day}/${d.month}',
             style: TextStyle(
               fontSize: 9,
-              color: (isDark ? Colors.white : Colors.black).withValues(
-                alpha: 0.5,
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.5,
               ),
             ),
           ),

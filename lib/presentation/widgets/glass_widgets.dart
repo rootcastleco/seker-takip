@@ -26,10 +26,10 @@ class RC {
   static const Color bgLight3 = Color(0xFFC2D5E8);
 
   // Cam efekt renkleri
-  static Color glassWhite = Colors.white.withValues(alpha: 0.08);
-  static Color glassBorder = Colors.white.withValues(alpha: 0.12);
-  static Color glassWhiteLight = Colors.white.withValues(alpha: 0.65);
-  static Color glassBorderLight = Colors.white.withValues(alpha: 0.8);
+  static Color glassWhite = Colors.white.withOpacity(0.08);
+  static Color glassBorder = Colors.white.withOpacity(0.12);
+  static Color glassWhiteLight = Colors.white.withOpacity(0.65);
+  static Color glassBorderLight = Colors.white.withOpacity(0.8);
 
   // Accent
   static const Color accent = Color(0xFF4FC3F7);
@@ -37,6 +37,76 @@ class RC {
 }
 
 // ─── Gradient Background ────────────────────────────────────
+
+/// Animasyonlu tam ekran gradient arka plan
+class AnimatedGradientBackground extends StatefulWidget {
+  const AnimatedGradientBackground({
+    super.key,
+    required this.isDark,
+    required this.child,
+  });
+
+  final bool isDark;
+  final Widget child;
+
+  @override
+  State<AnimatedGradientBackground> createState() =>
+      _AnimatedGradientBackgroundState();
+}
+
+class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 15),
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, _) {
+        final colors = widget.isDark
+            ? [
+                Color.lerp(RC.bgDark1, RC.bgDark3, _animation.value)!,
+                RC.bgDark2,
+                Color.lerp(RC.bgDark3, RC.bgDark1, _animation.value)!,
+              ]
+            : [
+                Color.lerp(RC.bgLight1, RC.bgLight3, _animation.value)!,
+                RC.bgLight2,
+                Color.lerp(RC.bgLight3, RC.bgLight1, _animation.value)!,
+              ];
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: colors,
+            ),
+          ),
+          child: widget.child,
+        );
+      },
+    );
+  }
+}
 
 /// Tam ekran gradient arka plan (tüm sayfaların wrapperi).
 class GlassScaffold extends StatelessWidget {
@@ -66,16 +136,8 @@ class GlassScaffold extends StatelessWidget {
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: floatingActionButtonLocation,
       bottomNavigationBar: bottomNavigationBar,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [RC.bgDark1, RC.bgDark2, RC.bgDark3]
-                : [RC.bgLight1, RC.bgLight2, RC.bgLight3],
-          ),
-        ),
+      body: AnimatedGradientBackground(
+        isDark: isDark,
         child: body,
       ),
     );
@@ -126,7 +188,7 @@ class GlassCard extends StatelessWidget {
               border: Border.all(color: border, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -166,8 +228,8 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       backgroundColor: isDark
-          ? Colors.black.withValues(alpha: 0.4)
-          : Colors.white.withValues(alpha: 0.5),
+          ? Colors.black.withOpacity(0.4)
+          : Colors.white.withOpacity(0.5),
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
@@ -233,11 +295,11 @@ class GlassButton extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
-          colors: [btnColor, btnColor.withValues(alpha: 0.8)],
+          colors: [btnColor, btnColor.withOpacity(0.8)],
         ),
         boxShadow: [
           BoxShadow(
-            color: btnColor.withValues(alpha: isDark ? 0.4 : 0.25),
+            color: btnColor.withOpacity(isDark ? 0.4 : 0.25),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -295,13 +357,13 @@ InputDecoration glassInputDecoration({
     suffixText: suffixText,
     suffixIcon: suffixIcon,
     labelStyle: TextStyle(
-      color: isDark ? Colors.white70 : RC.blue.withValues(alpha: 0.7),
+      color: isDark ? Colors.white70 : RC.blue.withOpacity(0.7),
     ),
     hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.grey.shade400),
     filled: true,
     fillColor: isDark
-        ? Colors.white.withValues(alpha: 0.06)
-        : Colors.white.withValues(alpha: 0.7),
+        ? Colors.white.withOpacity(0.06)
+        : Colors.white.withOpacity(0.7),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(
@@ -357,7 +419,7 @@ class GlassListTile extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: iconColor.withValues(alpha: isDark ? 0.15 : 0.1),
+            color: iconColor.withOpacity(isDark ? 0.15 : 0.1),
           ),
           child: Icon(icon, color: iconColor, size: 22),
         ),
@@ -409,8 +471,8 @@ class GlassSectionHeader extends StatelessWidget {
               fontWeight: FontWeight.bold,
               letterSpacing: 0.8,
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.6)
-                  : RC.blue.withValues(alpha: 0.6),
+                  ? Colors.white.withOpacity(0.6)
+                  : RC.blue.withOpacity(0.6),
             ),
           ),
         ],

@@ -50,7 +50,7 @@ class GlucoseRepository {
   GlucoseRecordEntity _toDomain(GlucoseRecord row) {
     return GlucoseRecordEntity(
       id: row.id,
-      tarih: row.tarih,
+      tarih: row.tarih.toLocal(),
       ilacInsulinAdi: row.ilacInsulinAdi,
       sabahAc: row.sabahAc,
       sabahTok: row.sabahTok,
@@ -61,8 +61,8 @@ class GlucoseRepository {
       yatmadanOnce: row.yatmadanOnce,
       gece03: row.gece03,
       notlar: row.notlar,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      createdAt: row.createdAt.toLocal(),
+      updatedAt: row.updatedAt.toLocal(),
     );
   }
 

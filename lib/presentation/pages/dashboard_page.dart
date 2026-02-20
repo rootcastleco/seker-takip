@@ -8,6 +8,7 @@ import '../../features/dashboard/logic/glucose_analyzer.dart';
 import '../../app/routes.dart';
 import '../state/providers.dart';
 import '../widgets/glass_widgets.dart';
+import '../widgets/glucose_chart.dart';
 
 /// Ana sayfa — Dashboard (Tab 1).
 ///
@@ -55,7 +56,7 @@ class DashboardPage extends ConsumerWidget {
           // ─── Sofia AI Hızlı Erişim ──────────────
           GlassCard(
             padding: EdgeInsets.zero,
-            borderColor: Colors.purple.withValues(alpha: 0.3),
+            borderColor: Colors.purple.withOpacity(0.3),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -199,12 +200,20 @@ class DashboardPage extends ConsumerWidget {
                     }
                     final avg =
                         allVals.reduce((a, b) => a + b) / allVals.length;
-                    return Text(
-                      '${records.length} kayıt — '
-                      'Genel ortalama: ${avg.toStringAsFixed(0)} mg/dL',
-                      style: TextStyle(
-                        color: isDark ? Colors.white70 : Colors.black87,
-                      ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                         Text(
+                          '${records.length} kayıt — '
+                          'Genel ortalama: ${avg.toStringAsFixed(0)} mg/dL',
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        GlucoseLineChart(records: records),
+                      ],
                     );
                   },
                   loading: () =>

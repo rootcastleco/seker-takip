@@ -410,7 +410,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                 color: Colors.black54,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.greenAccent.withValues(alpha: 0.3),
+                  color: Colors.greenAccent.withOpacity(0.3),
                 ),
               ),
               child: const Text(
@@ -470,7 +470,7 @@ class _RoiOverlayPainter extends CustomPainter {
     final roiRect = Rect.fromLTWH(roiLeft, roiTop, roiW, roiH);
 
     // Koyu overlay (ROI dışı)
-    final overlayPaint = Paint()..color = Colors.black.withValues(alpha: 0.6);
+    final overlayPaint = Paint()..color = Colors.black.withOpacity(0.6);
     final fullRect = Rect.fromLTWH(0, 0, size.width, size.height);
 
     canvas.saveLayer(fullRect, Paint());
@@ -487,7 +487,7 @@ class _RoiOverlayPainter extends CustomPainter {
     // ROI çerçeve (yeşil neon)
     final borderColor = isFrozen
         ? Colors.greenAccent
-        : Colors.greenAccent.withValues(alpha: 0.8);
+        : Colors.greenAccent.withOpacity(0.8);
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..color = borderColor

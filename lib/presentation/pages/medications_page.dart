@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../core/constants.dart';
 import '../../core/services/notification_service.dart';
@@ -77,33 +78,44 @@ class _MedicationsPageState extends ConsumerState<MedicationsPage> {
               final bTime = b.saatHour * 60 + b.saatMinute;
               return aTime.compareTo(bTime);
             });
-            return Column(
-              children: [
-                // Aktif ilaç sayısı
-                GlassCard(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _miniStat(
-                        '${sorted.where((m) => m.aktif).length}',
-                        'Aktif İlaç',
-                        RC.accentGreen,
-                        isDark,
-                      ),
-                      _miniStat('${sorted.length}', 'Toplam', RC.blue, isDark),
-                      _miniStat(
-                        _nextMedTime(sorted),
-                        'Sıradaki',
-                        RC.accent,
-                        isDark,
-                      ),
-                    ],
+            return AnimationLimiter(
+              child: Column(
+                children: AnimationConfiguration.toStaggeredList(
+                  duration: const Duration(milliseconds: 375),
+                  childAnimationBuilder: (widget) => SlideAnimation(
+                    verticalOffset: 50.0,
+                    child: FadeInAnimation(
+                      child: widget,
+                    ),
                   ),
+                  children: [
+                    // Aktif ilaç sayısı
+                    GlassCard(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _miniStat(
+                            '${sorted.where((m) => m.aktif).length}',
+                            'Aktif İlaç',
+                            RC.accentGreen,
+                            isDark,
+                          ),
+                          _miniStat('${sorted.length}', 'Toplam', RC.blue, isDark),
+                          _miniStat(
+                            _nextMedTime(sorted),
+                            'Sıradaki',
+                            RC.accent,
+                            isDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...sorted.map((med) => _buildMedCard(med, isDark)),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                ...sorted.map((med) => _buildMedCard(med, isDark)),
-              ],
+              ),
             );
           },
         ),
@@ -189,7 +201,7 @@ class _MedicationsPageState extends ConsumerState<MedicationsPage> {
   Widget _buildMedCard(MedicationEntity med, bool isDark) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderColor: med.aktif ? RC.accentGreen.withValues(alpha: 0.3) : null,
+      borderColor: med.aktif ? RC.accentGreen.withOpacity(0.3) : null,
       child: Row(
         children: [
           // İkon
@@ -198,8 +210,8 @@ class _MedicationsPageState extends ConsumerState<MedicationsPage> {
             height: 44,
             decoration: BoxDecoration(
               color: med.aktif
-                  ? RC.accentGreen.withValues(alpha: 0.2)
-                  : Colors.grey.withValues(alpha: 0.2),
+                  ? RC.accentGreen.withOpacity(0.2)
+                  : Colors.grey.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(

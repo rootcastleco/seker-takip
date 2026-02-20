@@ -25,7 +25,7 @@ class AboutPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: RC.blue.withValues(alpha: 0.3),
+                    color: RC.blue.withOpacity(0.3),
                     blurRadius: 24,
                     spreadRadius: 2,
                   ),
@@ -77,7 +77,7 @@ class AboutPage extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      color: RC.green.withValues(alpha: 0.2),
+                      color: RC.green.withOpacity(0.2),
                     ),
                     child: const Icon(Icons.person, color: RC.accentGreen),
                   ),

@@ -128,8 +128,8 @@ class _ImportPageState extends ConsumerState<ImportPage> {
             if (_errorMessage != null) ...[
               const SizedBox(height: 16),
               GlassCard(
-                borderColor: Colors.red.withValues(alpha: 0.4),
-                backgroundColor: Colors.red.withValues(alpha: 0.1),
+                borderColor: Colors.red.withOpacity(0.4),
+                backgroundColor: Colors.red.withOpacity(0.1),
                 child: Text(
                   _errorMessage!,
                   style: const TextStyle(color: Colors.redAccent),

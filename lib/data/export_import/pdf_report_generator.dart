@@ -7,6 +7,7 @@ import '../../core/constants.dart';
 import '../../core/formatting.dart';
 import '../../domain/entities/profile.dart';
 import '../../domain/entities/glucose_record.dart';
+import '../../domain/entities/medication.dart';
 import '../../domain/usecases/ea1c_calculator.dart';
 
 /// Profesyonel PDF rapor oluşturucu — Türkçe karakter destekli.
@@ -39,6 +40,7 @@ class PdfReportGenerator {
   static Future<void> writeToFile({
     required ProfileEntity profile,
     required List<GlucoseRecordEntity> records,
+    required List<MedicationEntity> medications,
     required String filePath,
   }) async {
     // Türkçe karakter destekli fontlar yükle
@@ -102,6 +104,20 @@ class PdfReportGenerator {
               style: pw.TextStyle(fontSize: 8, color: _red),
             ),
           ],
+          
+          if (medications.isNotEmpty) ...[
+            pw.SizedBox(height: 16),
+            pw.Text(
+              Tr.ilacListesi,
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: _rootcastleBlue,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            _buildMedicationsTable(medications),
+          ]
         ],
       ),
     );
@@ -297,40 +313,106 @@ class PdfReportGenerator {
       '03:00',
     ];
 
-    return pw.TableHelper.fromTextArray(
-      cellAlignment: pw.Alignment.center,
-      headerAlignment: pw.Alignment.center,
-      headerStyle: pw.TextStyle(
-        fontSize: 8,
-        fontWeight: pw.FontWeight.bold,
-        color: PdfColors.white,
-      ),
-      headerDecoration: const pw.BoxDecoration(color: _rootcastleBlue),
-      cellStyle: pw.TextStyle(fontSize: 8),
-      cellHeight: 22,
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300),
       columnWidths: {0: const pw.FixedColumnWidth(60)},
-      headers: headers,
-      data: records.map((r) {
-        return [
-          formatDate(r.tarih),
-          _cellVal(r.sabahAc, isFasting: true),
-          _cellVal(r.sabahTok),
-          _cellVal(r.oglenAc, isFasting: true),
-          _cellVal(r.oglenTok),
-          _cellVal(r.aksamAc, isFasting: true),
-          _cellVal(r.aksamTok),
-          _cellVal(r.yatmadanOnce),
-          _cellVal(r.gece03),
-        ];
-      }).toList(),
+      children: [
+        // Headers
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: _rootcastleBlue),
+          children: headers.map((h) => _headerCell(h)).toList(),
+        ),
+        // Data
+        ...records.map((r) => pw.TableRow(
+          children: [
+            _cell(formatDate(r.tarih)),
+            _cellValWidget(r.sabahAc, isFasting: true),
+            _cellValWidget(r.sabahTok),
+            _cellValWidget(r.oglenAc, isFasting: true),
+            _cellValWidget(r.oglenTok),
+            _cellValWidget(r.aksamAc, isFasting: true),
+            _cellValWidget(r.aksamTok),
+            _cellValWidget(r.yatmadanOnce),
+            _cellValWidget(r.gece03),
+          ],
+        )),
+      ],
     );
   }
 
-  static String _cellVal(int? value, {bool isFasting = false}) {
-    if (value == null) return '-';
+  static pw.Widget _headerCell(String text) {
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 8,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.white,
+        ),
+      ),
+    );
+  }
+
+  static pw.Widget _cell(String text) {
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      child: pw.Text(text, style: const pw.TextStyle(fontSize: 8)),
+    );
+  }
+
+  static pw.Widget _cellValWidget(int? value, {bool isFasting = false}) {
+    if (value == null) return _cell('-');
     final threshold = isFasting ? kTargetAksFasting : kTargetPostprandial;
-    // Kırmızı gösterim için metin ile işaretle
-    if (value > threshold) return '⚠$value';
-    return '$value';
+    final isHigh = value > threshold;
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      child: pw.Text(
+        '$value',
+        style: pw.TextStyle(
+          fontSize: 8,
+          color: isHigh ? _red : PdfColors.black,
+          fontWeight: isHigh ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+      ),
+    );
+  }
+
+  static pw.Widget _buildMedicationsTable(List<MedicationEntity> meds) {
+    if (meds.isEmpty) return pw.SizedBox();
+    
+    final activeMeds = meds.where((m) => m.aktif).toList();
+    if (activeMeds.isEmpty) {
+      return pw.Text('Aktif ilaç bulunmamaktadır.', style: const pw.TextStyle(fontSize: 10));
+    }
+
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(2),
+        1: const pw.FlexColumnWidth(1),
+        2: const pw.FlexColumnWidth(1),
+      },
+      children: [
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: _rootcastleBlue),
+          children: [
+            _headerCell(Tr.ilacAdi),
+            _headerCell(Tr.ilacDozu),
+            _headerCell(Tr.ilacSaati),
+          ],
+        ),
+        ...activeMeds.map((m) => pw.TableRow(
+          children: [
+            _cell(m.ilacAdi),
+            _cell(m.doz.isNotEmpty ? m.doz : '-'),
+            _cell(m.hatirlatmaSaati.isNotEmpty ? m.hatirlatmaSaati : '-'),
+          ],
+        )),
+      ],
+    );
   }
 }

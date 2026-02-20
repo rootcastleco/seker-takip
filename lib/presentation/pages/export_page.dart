@@ -31,6 +31,7 @@ class _ExportPageState extends ConsumerState<ExportPage> {
     try {
       final records = await ref.read(glucoseRepositoryProvider).getAll();
       final profile = await ref.read(profileRepositoryProvider).getProfile();
+      final medications = await ref.read(medicationsProvider.future);
       final dir = await getApplicationDocumentsDirectory();
       final timestamp = formatExportTimestamp(DateTime.now());
       final baseName = '${kExportPrefix}_$timestamp';
@@ -55,6 +56,7 @@ class _ExportPageState extends ConsumerState<ExportPage> {
         await PdfReportGenerator.writeToFile(
           profile: profile,
           records: records,
+          medications: medications,
           filePath: filePath,
         );
       }

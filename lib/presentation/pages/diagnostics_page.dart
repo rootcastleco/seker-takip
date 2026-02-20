@@ -127,7 +127,7 @@ class _DiagnosticsPageState extends State<DiagnosticsPage> {
                             fontFamily: 'monospace',
                             fontSize: 11,
                             color: isDark
-                                ? RC.accent.withValues(alpha: 0.8)
+                                ? RC.accent.withOpacity(0.8)
                                 : Colors.black87,
                           ),
                         ),

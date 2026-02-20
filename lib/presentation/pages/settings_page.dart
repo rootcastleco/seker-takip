@@ -84,7 +84,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: RC.accentGreen.withValues(alpha: isDark ? 0.15 : 0.1),
+                color: RC.accentGreen.withOpacity(isDark ? 0.15 : 0.1),
               ),
               child: Icon(
                 Icons.record_voice_over,

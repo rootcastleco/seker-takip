@@ -37,6 +37,24 @@ class _RecordEditPageState extends ConsumerState<RecordEditPage> {
   bool _initialized = false;
   GlucoseRecordEntity? _existing;
 
+  String _selectedPeriod = Tr.sabahAc;
+  late final Map<String, TextEditingController> _periodControllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _periodControllers = {
+      Tr.sabahAc: _sabahAcCtrl,
+      Tr.sabahTok: _sabahTokCtrl,
+      Tr.oglenAc: _oglenAcCtrl,
+      Tr.oglenTok: _oglenTokCtrl,
+      Tr.aksamAc: _aksamAcCtrl,
+      Tr.aksamTok: _aksamTokCtrl,
+      Tr.yatmadanOnce: _yatmadanCtrl,
+      Tr.gece03: _gece03Ctrl,
+    };
+  }
+
   @override
   void dispose() {
     _ilacCtrl.dispose();
@@ -53,21 +71,33 @@ class _RecordEditPageState extends ConsumerState<RecordEditPage> {
   }
 
   void _fillForm(GlucoseRecordEntity record) {
-    if (!_initialized) {
-      _selectedDate = record.tarih;
-      _ilacCtrl.text = record.ilacInsulinAdi ?? '';
-      _sabahAcCtrl.text = record.sabahAc?.toString() ?? '';
-      _sabahTokCtrl.text = record.sabahTok?.toString() ?? '';
-      _oglenAcCtrl.text = record.oglenAc?.toString() ?? '';
-      _oglenTokCtrl.text = record.oglenTok?.toString() ?? '';
-      _aksamAcCtrl.text = record.aksamAc?.toString() ?? '';
-      _aksamTokCtrl.text = record.aksamTok?.toString() ?? '';
-      _yatmadanCtrl.text = record.yatmadanOnce?.toString() ?? '';
-      _gece03Ctrl.text = record.gece03?.toString() ?? '';
-      _notCtrl.text = record.notlar ?? '';
-      _existing = record;
-      _initialized = true;
-    }
+    _selectedDate = record.tarih;
+    _ilacCtrl.text = record.ilacInsulinAdi ?? '';
+    _sabahAcCtrl.text = record.sabahAc?.toString() ?? '';
+    _sabahTokCtrl.text = record.sabahTok?.toString() ?? '';
+    _oglenAcCtrl.text = record.oglenAc?.toString() ?? '';
+    _oglenTokCtrl.text = record.oglenTok?.toString() ?? '';
+    _aksamAcCtrl.text = record.aksamAc?.toString() ?? '';
+    _aksamTokCtrl.text = record.aksamTok?.toString() ?? '';
+    _yatmadanCtrl.text = record.yatmadanOnce?.toString() ?? '';
+    _gece03Ctrl.text = record.gece03?.toString() ?? '';
+    _notCtrl.text = record.notlar ?? '';
+    _existing = record;
+    _initialized = true;
+  }
+  
+  void _clearForm() {
+    _existing = null;
+    _ilacCtrl.clear();
+    _sabahAcCtrl.clear();
+    _sabahTokCtrl.clear();
+    _oglenAcCtrl.clear();
+    _oglenTokCtrl.clear();
+    _aksamAcCtrl.clear();
+    _aksamTokCtrl.clear();
+    _yatmadanCtrl.clear();
+    _gece03Ctrl.clear();
+    _notCtrl.clear();
   }
 
   int? _parseInt(String text) {
@@ -84,7 +114,11 @@ class _RecordEditPageState extends ConsumerState<RecordEditPage> {
       locale: const Locale('tr', 'TR'),
     );
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      setState(() {
+        _selectedDate = picked;
+        _initialized = false;
+        _clearForm();
+      });
     }
   }
 
@@ -276,12 +310,27 @@ class _RecordEditPageState extends ConsumerState<RecordEditPage> {
   Widget build(BuildContext context) {
     final recordsAsync = ref.watch(glucoseRecordsProvider);
 
-    // Düzenleme modundaysa mevcut kaydı bul
-    if (widget.recordId != null && !_initialized) {
+    // Düzenleme veya gün seçimi modundaysa mevcut kaydı bul
+    if (!_initialized) {
       recordsAsync.whenData((records) {
-        final found = records.where((r) => r.id == widget.recordId);
-        if (found.isNotEmpty) {
-          _fillForm(found.first);
+        if (widget.recordId != null) {
+          final found = records.where((r) => r.id == widget.recordId);
+          if (found.isNotEmpty) _fillForm(found.first);
+        } else {
+          // Check if there is already a record for the selected date
+          final todayRecords = records.where((r) {
+            final local = r.tarih.toLocal();
+            return local.year == _selectedDate.year &&
+                local.month == _selectedDate.month &&
+                local.day == _selectedDate.day;
+          });
+          if (todayRecords.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _fillForm(todayRecords.first));
+            });
+          } else {
+            _initialized = true;
+          }
         }
       });
     }
@@ -339,46 +388,42 @@ class _RecordEditPageState extends ConsumerState<RecordEditPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Ölçüm alanları
-                _GlucoseField(
-                  controller: _sabahAcCtrl,
-                  label: Tr.sabahAc,
-                  onScan: () => _scanForField(_sabahAcCtrl),
+                // Ölçüm Zamanı Seçimi
+                DropdownButtonFormField<String>(
+                  value: _selectedPeriod,
+                  decoration: glassInputDecoration(
+                    context: context,
+                    label: 'Ölçüm Zamanı',
+                  ),
+                  dropdownColor: Theme.of(context).brightness == Brightness.dark
+                      ? RC.bgDark2
+                      : Colors.white,
+                  items: _periodControllers.keys.map((period) {
+                    // Check if value exists to show an indicator
+                    final hasValue = _periodControllers[period]!.text.isNotEmpty;
+                    return DropdownMenuItem(
+                      value: period,
+                      child: Text(
+                        hasValue ? '$period (Dolu)' : period,
+                        style: TextStyle(
+                          color: hasValue ? RC.accentGreen : null,
+                          fontWeight: hasValue ? FontWeight.bold : null,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _selectedPeriod = val);
+                    }
+                  },
                 ),
+                const SizedBox(height: 16),
+                // Tek Ölçüm Alanı
                 _GlucoseField(
-                  controller: _sabahTokCtrl,
-                  label: Tr.sabahTok,
-                  onScan: () => _scanForField(_sabahTokCtrl),
-                ),
-                _GlucoseField(
-                  controller: _oglenAcCtrl,
-                  label: Tr.oglenAc,
-                  onScan: () => _scanForField(_oglenAcCtrl),
-                ),
-                _GlucoseField(
-                  controller: _oglenTokCtrl,
-                  label: Tr.oglenTok,
-                  onScan: () => _scanForField(_oglenTokCtrl),
-                ),
-                _GlucoseField(
-                  controller: _aksamAcCtrl,
-                  label: Tr.aksamAc,
-                  onScan: () => _scanForField(_aksamAcCtrl),
-                ),
-                _GlucoseField(
-                  controller: _aksamTokCtrl,
-                  label: Tr.aksamTok,
-                  onScan: () => _scanForField(_aksamTokCtrl),
-                ),
-                _GlucoseField(
-                  controller: _yatmadanCtrl,
-                  label: Tr.yatmadanOnce,
-                  onScan: () => _scanForField(_yatmadanCtrl),
-                ),
-                _GlucoseField(
-                  controller: _gece03Ctrl,
-                  label: Tr.gece03,
-                  onScan: () => _scanForField(_gece03Ctrl),
+                  controller: _periodControllers[_selectedPeriod]!,
+                  label: _selectedPeriod,
+                  onScan: () => _scanForField(_periodControllers[_selectedPeriod]!),
                 ),
                 const SizedBox(height: 12),
                 // Not

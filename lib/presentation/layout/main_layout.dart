@@ -7,6 +7,7 @@ import '../pages/dashboard_page.dart';
 import '../pages/medications_page.dart';
 import '../pages/sofia_ai_page.dart';
 import '../pages/settings_page.dart';
+import '../pages/records_table_page.dart';
 import '../widgets/glass_widgets.dart';
 
 /// Ana düzen — BottomNavigationBar + IndexedStack.
@@ -25,8 +26,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   static const List<Widget> _pages = [
     DashboardPage(),
+    RecordsTablePage(),
     MedicationsPage(),
-    SofiaAiPage(),
     SettingsPage(),
   ];
 
@@ -92,7 +93,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   Navigator.pushNamed(context, AppRoutes.recordEdit);
                 },
               ),
-              // Kayıt Defteri
+              // Kayıt Defteri (Navigasyona taşındı, isteğe bağlı buradan kaldırılabilir, ama yedek olarak kalabilir)
               GlassListTile(
                 icon: Icons.list_alt_rounded,
                 label: Tr.tabKayitDefteri,
@@ -133,7 +134,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         color: RC.black,
         border: Border(
           top: BorderSide(
-            color: Colors.white.withValues(alpha: 0.06),
+            color: Colors.white.withOpacity(0.06),
             width: 0.5,
           ),
         ),
@@ -145,9 +146,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _navItem(0, Icons.home_rounded, Tr.tabAnaSayfa, isDark),
-              _navItem(1, Icons.medication_rounded, Tr.tabIlaclarim, isDark),
+              _navItem(1, Icons.list_alt_rounded, Tr.tabKayitDefteri, isDark),
               const SizedBox(width: 56), // Space for FAB
-              _navItem(2, Icons.auto_awesome, Tr.tabSofia, isDark),
+              _navItem(2, Icons.medication_rounded, Tr.tabIlaclarim, isDark),
               _navItem(3, Icons.settings_rounded, Tr.tabAyarlar, isDark),
             ],
           ),
@@ -158,12 +159,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   Widget _navItem(int index, IconData icon, String label, bool isDark) {
     final isSelected = _currentIndex == index;
-    final color = isSelected ? RC.accent : Colors.white.withValues(alpha: 0.4);
+    final color = isSelected ? RC.accent : Colors.white.withOpacity(0.4);
 
     return Expanded(
       child: InkWell(
         onTap: () => _onTabTap(index),
-        splashColor: RC.blue.withValues(alpha: 0.2),
+        splashColor: RC.blue.withOpacity(0.2),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -172,7 +173,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: isSelected
                   ? BoxDecoration(
-                      color: RC.blue.withValues(alpha: 0.3),
+                      color: RC.blue.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(12),
                     )
                   : null,

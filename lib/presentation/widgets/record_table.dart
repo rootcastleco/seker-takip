@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/formatting.dart';
 import '../../domain/entities/glucose_record.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 /// Hedef dışı uyarı ikonu döner.
 Widget? glucoseWarningIcon(int? value, {bool isFasting = true}) {
@@ -39,26 +40,24 @@ class RecordTable extends StatelessWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        child: DataTable(
-          columnSpacing: 14,
-          headingRowColor: WidgetStatePropertyAll(
-            Theme.of(context).colorScheme.primaryContainer.withAlpha(60),
-          ),
-          columns: const [
-            DataColumn(label: Text(Tr.tarihKolonu)),
-            DataColumn(label: Text('Sabah\nAç'), numeric: true),
-            DataColumn(label: Text('Sabah\nTok(2s)'), numeric: true),
-            DataColumn(label: Text('Öğlen\nAç'), numeric: true),
-            DataColumn(label: Text('Öğlen\nTok(2s)'), numeric: true),
-            DataColumn(label: Text('Akşam\nAç'), numeric: true),
-            DataColumn(label: Text('Akşam\nTok(2s)'), numeric: true),
-            DataColumn(label: Text('Yat.\nÖnce'), numeric: true),
-            DataColumn(label: Text('Gece\n03:00'), numeric: true),
-            DataColumn(label: Text('Not')),
-          ],
-          rows: records.map((r) => _buildRow(context, r)).toList(),
+      child: DataTable(
+        columnSpacing: 14,
+        headingRowColor: WidgetStatePropertyAll(
+          Theme.of(context).colorScheme.primaryContainer.withAlpha(60),
         ),
+        columns: const [
+          DataColumn(label: Text(Tr.tarihKolonu)),
+          DataColumn(label: Text('Sabah\nAç'), numeric: true),
+          DataColumn(label: Text('Sabah\nTok(2s)'), numeric: true),
+          DataColumn(label: Text('Öğlen\nAç'), numeric: true),
+          DataColumn(label: Text('Öğlen\nTok(2s)'), numeric: true),
+          DataColumn(label: Text('Akşam\nAç'), numeric: true),
+          DataColumn(label: Text('Akşam\nTok(2s)'), numeric: true),
+          DataColumn(label: Text('Yat.\nÖnce'), numeric: true),
+          DataColumn(label: Text('Gece\n03:00'), numeric: true),
+          DataColumn(label: Text('Not')),
+        ],
+        rows: records.map((r) => _buildRow(context, r)).toList(),
       ),
     );
   }

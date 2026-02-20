@@ -80,7 +80,7 @@ class TargetsPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           GlassCard(
-            borderColor: Colors.amber.withValues(alpha: 0.3),
+            borderColor: Colors.amber.withOpacity(0.3),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
